@@ -41,10 +41,21 @@ final class BinExtendedTest extends LintTestCase
         if (!is_dir($dir)) {
             return;
         }
-        foreach (glob($dir . '/*') as $file) {
+
+        $children = scandir($dir);
+        if ($children === false) {
+            return;
+        }
+
+        foreach ($children as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+
+            $file = $dir . '/' . $entry;
             is_dir($file) ? $this->removeTmpDir($file) : unlink($file);
             // Remove from tempFiles if tracked
-            $this->tempFiles = array_filter($this->tempFiles, static fn ($f) => $f !== $file);
+            $this->tempFiles = array_values(array_filter($this->tempFiles, static fn (string $f): bool => $f !== $file));
         }
         rmdir($dir);
     }
