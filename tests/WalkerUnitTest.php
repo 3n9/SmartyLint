@@ -18,6 +18,7 @@ use SmartyLint\Walker\NodeWalker;
 use SmartyLint\Walker\RelativePathWalker;
 use SmartyLint\Walker\UnusedAssignWalker;
 use SmartyLint\Walker\UnusedCaptureWalker;
+use SmartyLint\Walker\UnescapedVariableWalker;
 
 /**
  * Direct unit tests for each walker class.
@@ -674,5 +675,57 @@ final class WalkerUnitTest extends TestCase
         $this->walkTree($ast2, $walker, $issues2);
         $walker->finalize($this->path, $issues2);
         $this->assertCount(0, $issues2->all());
+    }
+
+    // -------------------------------------------------------------------------
+    // UnescapedVariableWalker
+    // -------------------------------------------------------------------------
+
+    public function testBareVariablePrintWarns(): void
+    {
+        $walker = new UnescapedVariableWalker();
+        $issues = $this->issues('{$name}', $walker);
+        $this->assertCount(1, $issues);
+        $this->assertSame('WARNING', $issues[0]->severity);
+        $this->assertStringContainsString('$name', $issues[0]->message);
+    }
+
+    public function testVariableWithEscapeModifierIsClean(): void
+    {
+        $walker = new UnescapedVariableWalker();
+        $this->assertCount(0, $this->issues('{$name|escape}', $walker));
+    }
+
+    public function testVariableWithHModifierIsClean(): void
+    {
+        $walker = new UnescapedVariableWalker();
+        $this->assertCount(0, $this->issues('{$name|h}', $walker));
+    }
+
+    public function testVariableWithHtmlspecialcharsModifierIsClean(): void
+    {
+        $walker = new UnescapedVariableWalker();
+        $this->assertCount(0, $this->issues('{$name|htmlspecialchars}', $walker));
+    }
+
+    public function testVariableWithNonEscapeModifierWarns(): void
+    {
+        $walker = new UnescapedVariableWalker();
+        $issues = $this->issues('{$name|upper}', $walker);
+        $this->assertCount(1, $issues);
+        $this->assertSame('WARNING', $issues[0]->severity);
+    }
+
+    public function testMultipleUnescapedVarsReportAll(): void
+    {
+        $walker = new UnescapedVariableWalker();
+        $issues = $this->issues('{$a} {$b} {$c|escape}', $walker);
+        $this->assertCount(2, $issues);
+    }
+
+    public function testLiteralPrintProducesNoWarning(): void
+    {
+        $walker = new UnescapedVariableWalker();
+        $this->assertCount(0, $this->issues('<p>Hello world</p>', $walker));
     }
 }

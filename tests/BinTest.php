@@ -488,4 +488,25 @@ final class BinTest extends LintTestCase
             $this->assertStringNotContainsString('$used', $issue['message']);
         }
     }
+
+    // ------------------------------------------------------------------
+    // UnescapedVariable (strict/opt-in)
+    // ------------------------------------------------------------------
+
+    public function testUnescapedVariableOffByDefault(): void
+    {
+        [$exit] = $this->runBin([$this->fixture('errors/unescaped_var.tpl')]);
+        $this->assertSame(0, $exit);
+    }
+
+    public function testUnescapedVariableEnabledViaCliFlag(): void
+    {
+        $issues = $this->runBinJson([
+            '--enable', 'UnescapedVariable',
+            $this->fixture('errors/unescaped_var.tpl'),
+        ]);
+        // $name (bare) and $title|upper should be flagged; $safe|escape and $also_safe|h should not
+        $flagged = array_filter($issues, static fn ($i) => str_contains($i['message'], 'escaping'));
+        $this->assertCount(2, array_values($flagged));
+    }
 }

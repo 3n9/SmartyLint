@@ -29,6 +29,7 @@ final class LintApplication
         $excludePatterns = [];
         $templateRoot = null;
         $maxScanDepth = null;
+        $strictRules = [];
 
         for ($i = 0, $n = count($args); $i < $n; $i++) {
             $arg = $args[$i];
@@ -70,6 +71,10 @@ final class LintApplication
                     return 1;
                 }
                 $maxScanDepth = $parsed;
+            } elseif ($arg === '--enable') {
+                $strictRules[] = $args[++$i] ?? '';
+            } elseif (str_starts_with($arg, '--enable=')) {
+                $strictRules[] = substr($arg, 9);
             } else {
                 $paths[] = $arg;
             }
@@ -99,6 +104,7 @@ final class LintApplication
             templateRoot: $templateRoot,
             excludePatterns: $excludePatterns,
             maxScanDepth: $maxScanDepth,
+            strictRules: $strictRules,
         );
 
         // ----------------------------------------------------------------
@@ -144,7 +150,10 @@ final class LintApplication
         // ----------------------------------------------------------------
         // Run linting
         // ----------------------------------------------------------------
-        $cache = new LintCache($cachePathBase . '/.smartylint-cache.json');
+        $configFingerprint = $config->strictRules !== []
+            ? md5(implode(',', $config->strictRules))
+            : '';
+        $cache = new LintCache($cachePathBase . '/.smartylint-cache.json', $configFingerprint);
         $engine = new LintEngine(null, null, $cache, $config);
         $issues = $engine->lintFiles($filesToLint, $findUnused);
         $engine->saveCache();
@@ -184,6 +193,7 @@ final class LintApplication
         fwrite(STDERR, "  --exclude <pattern>     Exclude files matching glob pattern (repeatable)\n");
         fwrite(STDERR, "  --template-root <path>  Base directory for resolving template includes\n");
         fwrite(STDERR, "  --max-depth <n>         Maximum recursion depth for --recursive directory scans\n");
+        fwrite(STDERR, "  --enable <rule>         Enable an opt-in rule (repeatable), e.g. UnescapedVariable\n");
         fwrite(STDERR, "  --version, -V           Print version and exit\n");
     }
 

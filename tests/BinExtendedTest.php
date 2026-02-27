@@ -1155,4 +1155,28 @@ final class BinExtendedTest extends LintTestCase
         [$exit] = $this->runBin([$path]);
         $this->assertSame(0, $exit);
     }
+
+    // ------------------------------------------------------------------
+    // UnescapedVariable — config file activation
+    // ------------------------------------------------------------------
+
+    public function testUnescapedVariableEnabledViaConfigFile(): void
+    {
+        $tmpDir = sys_get_temp_dir() . '/smartylint_esc_' . uniqid();
+        mkdir($tmpDir);
+        file_put_contents($tmpDir . '/t.tpl', '{$name}');
+        file_put_contents($tmpDir . '/.smartylintrc.json', json_encode([
+            'strictRules' => ['UnescapedVariable'],
+        ]));
+
+        $bin = realpath(__DIR__ . '/../bin/smarty-lint');
+        $cmd = 'php ' . escapeshellarg($bin) . ' --json ' . escapeshellarg($tmpDir . '/t.tpl');
+        exec('cd ' . escapeshellarg($tmpDir) . ' && ' . $cmd, $outputLines, $exitCode);
+        $issues = json_decode(implode('', $outputLines), true) ?? [];
+
+        $this->removeTmpDir($tmpDir);
+
+        $this->assertSame(1, $exitCode);
+        $this->assertNotEmpty(array_filter($issues, static fn ($i) => str_contains($i['message'], 'escaping')));
+    }
 }

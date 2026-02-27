@@ -9,15 +9,20 @@ final class LintCache
     private const CACHE_VERSION = '2'; // bumped: fingerprint now uses md5_file
 
     private string $cachePath;
+    /** Combined version tag including a config fingerprint (when set). */
+    private string $effectiveVersion;
 
     /** @var array<string,array{fingerprint:string,dependencies:array<string,string>,issues:list<array<string,mixed>>}> */
     private array $entries = [];
 
     private bool $dirty = false;
 
-    public function __construct(string $cachePath)
+    public function __construct(string $cachePath, string $configFingerprint = '')
     {
         $this->cachePath = $cachePath;
+        $this->effectiveVersion = $configFingerprint !== ''
+            ? self::CACHE_VERSION . ':' . $configFingerprint
+            : self::CACHE_VERSION;
         $this->load();
     }
 
@@ -76,7 +81,7 @@ final class LintCache
         }
 
         $payload = [
-            'version' => self::CACHE_VERSION,
+            'version' => $this->effectiveVersion,
             'entries' => $this->entries,
         ];
 
@@ -119,7 +124,7 @@ final class LintCache
             return;
         }
 
-        if (($decoded['version'] ?? null) !== self::CACHE_VERSION) {
+        if (($decoded['version'] ?? null) !== $this->effectiveVersion) {
             return;
         }
 

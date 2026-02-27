@@ -16,6 +16,7 @@ final class LintConfig
      * @param list<string>   $excludePatterns Glob patterns for files to exclude from linting.
      * @param int            $maxNestingDepth Maximum allowed block nesting depth (DeepNestingWalker threshold).
      * @param int|null       $maxScanDepth    Maximum recursive directory scan depth; null means unlimited.
+     * @param list<string>   $strictRules     Extra rules that are off by default but can be opted in, e.g. ['UnescapedVariable'].
      */
     public function __construct(
         public readonly ?string $templateRoot = null,
@@ -23,6 +24,7 @@ final class LintConfig
         public readonly array $excludePatterns = [],
         public readonly int $maxNestingDepth = 5,
         public readonly ?int $maxScanDepth = null,
+        public readonly array $strictRules = [],
     ) {
     }
 
@@ -68,7 +70,11 @@ final class LintConfig
             ? $data['maxScanDepth']
             : null;
 
-        return new self($templateRoot, $disabledRules, $excludePatterns, $maxNestingDepth, $maxScanDepth);
+        $strictRules = isset($data['strictRules']) && is_array($data['strictRules'])
+            ? array_values(array_filter($data['strictRules'], 'is_string'))
+            : [];
+
+        return new self($templateRoot, $disabledRules, $excludePatterns, $maxNestingDepth, $maxScanDepth, $strictRules);
     }
 
     /**
@@ -82,6 +88,7 @@ final class LintConfig
         array $excludePatterns = [],
         ?int $maxNestingDepth = null,
         ?int $maxScanDepth = null,
+        array $strictRules = [],
     ): self {
         return new self(
             templateRoot: $templateRoot ?? $this->templateRoot,
@@ -89,6 +96,7 @@ final class LintConfig
             excludePatterns: array_values(array_unique(array_merge($this->excludePatterns, $excludePatterns))),
             maxNestingDepth: $maxNestingDepth ?? $this->maxNestingDepth,
             maxScanDepth: $maxScanDepth ?? $this->maxScanDepth,
+            strictRules: $strictRules !== [] ? array_values(array_unique(array_merge($this->strictRules, $strictRules))) : $this->strictRules,
         );
     }
 }

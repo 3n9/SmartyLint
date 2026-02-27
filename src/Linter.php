@@ -17,6 +17,7 @@ use SmartyLint\Walker\NodeWalker;
 use SmartyLint\Walker\RelativePathWalker;
 use SmartyLint\Walker\UnusedAssignWalker;
 use SmartyLint\Walker\UnusedCaptureWalker;
+use SmartyLint\Walker\UnescapedVariableWalker;
 
 final class Linter
 {
@@ -45,6 +46,7 @@ final class Linter
         $this->includeCycleDetector = new IncludeCycleDetector($includeParser);
 
         $disabled = array_map('strtolower', $config->disabledRules);
+        $strict   = array_map('strtolower', $config->strictRules);
 
         $allWalkers = [
             'blockstructure'     => new BlockStructureWalker(),
@@ -58,9 +60,19 @@ final class Linter
             'unusedassign'       => $this->unusedAssignWalker,
         ];
 
+        // Strict (opt-in) walkers — only added when explicitly enabled.
+        $strictWalkers = [
+            'unescapedvariable' => new UnescapedVariableWalker(),
+        ];
+
         $this->walkers = [];
         foreach ($allWalkers as $key => $walker) {
             if (!in_array($key, $disabled, true)) {
+                $this->walkers[] = $walker;
+            }
+        }
+        foreach ($strictWalkers as $key => $walker) {
+            if (in_array($key, $strict, true)) {
                 $this->walkers[] = $walker;
             }
         }

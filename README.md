@@ -43,6 +43,7 @@ php bin/smarty-lint [options] <file|dir> [...]
 | `--exclude <pattern>` | Exclude files matching a glob pattern (repeatable) |
 | `--template-root <path>` | Base directory for resolving `{include}` / `{extends}` paths |
 | `--max-depth <n>` | Maximum recursion depth for `--recursive` directory scans (`0` = root directory only) |
+| `--enable <rule>` | Enable an opt-in rule (repeatable), e.g. `--enable UnescapedVariable` |
 | `--version`, `-V` | Print version and exit |
 
 ### Exit codes
@@ -163,6 +164,7 @@ Create `.smartylintrc.json` in the directory where you run `smarty-lint` (usuall
 | `maxNestingDepth` | int | Maximum block nesting depth before `DeepNestingWalker` warns (default `5`) |
 | `maxScanDepth` | int | Maximum depth for recursive directory scans (`0` = root directory only, omitted = unlimited) |
 | `disabledRules` | string[] | Walker names to disable (case-insensitive): `DeprecatedTag`, `RelativePath`, `BlockStructure`, `IncludeParameter`, `UnusedCapture`, `EmptyBlock`, `DeepNesting`, `DuplicateBlockName`, `UnusedAssign` |
+| `strictRules` | string[] | Opt-in rules to enable (off by default): `UnescapedVariable` |
 | `excludePatterns` | string[] | Glob patterns for files to skip |
 
 CLI flags take precedence over the config file.
@@ -320,6 +322,37 @@ Warns when `{assign var="x"}` (or the shorthand `{assign $x = ...}`) sets a vari
 ```
 
 Covers both the named (`var=`) and shorthand forms, as well as `{append}`.
+
+---
+
+### UnescapedVariableWalker *(opt-in)*
+
+Warns when a variable is printed without an HTML-escaping modifier. Because Smarty does not auto-escape output, `{$var}` renders the raw value and is a potential XSS vector.
+
+**Enable via CLI:**
+```bash
+php bin/smarty-lint --enable UnescapedVariable --recursive templates/
+```
+
+**Enable via config file:**
+```json
+{
+    "strictRules": ["UnescapedVariable"]
+}
+```
+
+```smarty
+{* WARNING: printed without escaping modifier *}
+{$name}
+{$title|upper}
+
+{* OK *}
+{$name|escape}
+{$name|h}
+{$name|htmlspecialchars}
+```
+
+Recognised escape modifiers: `escape`, `h`, `htmlspecialchars`, `htmlentities`.
 
 ---
 
