@@ -231,6 +231,15 @@ final class BinTest extends LintTestCase
         $this->assertHasIssue('ERROR', 'cycle', $issues);
     }
 
+    public function testDetectsExtendsCycle(): void
+    {
+        $issues = $this->runBinJson([
+            $this->fixture('errors/extends_cycle_a.tpl'),
+            $this->fixture('errors/extends_cycle_b.tpl'),
+        ]);
+        $this->assertHasIssue('ERROR', 'cycle', $issues);
+    }
+
     // ------------------------------------------------------------------
     // --find-unused
     // ------------------------------------------------------------------

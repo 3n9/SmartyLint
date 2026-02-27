@@ -95,7 +95,7 @@ final class IncludeCycleDetector
     private function collectIncludeEdges(Node $node, string $baseDir, array &$edges): void
     {
         $tag = $node instanceof TagLike ? $node->resolveTag() : null;
-        if ($tag !== null && strtolower($tag->name) === 'include') {
+        if ($tag !== null && in_array(strtolower($tag->name), ['include', 'extends'], true)) {
             $path = $this->extractIncludePath($tag, $baseDir);
             if ($path !== null) {
                 $edges[] = [

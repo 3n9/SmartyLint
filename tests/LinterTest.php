@@ -129,6 +129,16 @@ final class LinterTest extends TestCase
         $this->assertNotEmpty($cycleIssues);
     }
 
+    public function testExtendsCycleDetected(): void
+    {
+        $a = $this->tpl('ext_cyc_a', '{extends file="ext_cyc_b.tpl"}');
+        $b = $this->tpl('ext_cyc_b', '{extends file="ext_cyc_a.tpl"}');
+
+        $issuesA = $this->linter->lintFile($a);
+        $cycleIssues = array_filter($issuesA, static fn ($i) => str_contains(strtolower($i->message), 'cycle'));
+        $this->assertNotEmpty($cycleIssues);
+    }
+
     // ------------------------------------------------------------------
     // Include parameter validation
     // ------------------------------------------------------------------

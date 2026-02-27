@@ -8,7 +8,7 @@ Parses each template into a typed AST and runs configurable walker-based rules. 
 
 ## Requirements
 
-- PHP 8.2+
+- PHP 8.4+
 - Composer
 
 ---
@@ -35,7 +35,7 @@ php bin/smarty-lint [options] <file|dir> [...]
 
 | Flag | Description |
 |------|-------------|
-| `--recursive`, `-r` | Recursively scan directory for `.tpl` files |
+| `--recursive`, `-r` | Recursively scan directory for `.tpl` files (unreadable subdirectories are skipped) |
 | `--format <fmt>` | Output format: `text` (default), `json`, `sarif`, `checkstyle` |
 | `--json` | Alias for `--format json` |
 | `--find-unused` | Run project-wide unused-code analysis after per-file linting |
@@ -170,6 +170,24 @@ CLI flags take precedence over the config file.
 ---
 
 ## Rules
+
+### IncludeCycleDetector
+
+Reports circular dependencies between templates via `{include}` or `{extends}` tags. Both direct self-inclusion and indirect cycles across any number of templates are detected.
+
+```smarty
+{* ERROR: Include cycle detected: a.tpl -> b.tpl -> a.tpl *}
+{include file="b.tpl"}
+```
+
+```smarty
+{* ERROR: Include cycle detected: a.tpl -> b.tpl -> a.tpl *}
+{extends file="b.tpl"}
+```
+
+This check is always active and cannot be disabled via `disabledRules`.
+
+---
 
 ### DeprecatedTagWalker
 
