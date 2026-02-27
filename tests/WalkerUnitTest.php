@@ -699,13 +699,15 @@ final class WalkerUnitTest extends TestCase
     public function testVariableWithHModifierIsClean(): void
     {
         $walker = new UnescapedVariableWalker();
-        $this->assertCount(0, $this->issues('{$name|h}', $walker));
+        // |h is not a standard Smarty modifier — should still warn
+        $this->assertCount(1, $this->issues('{$name|h}', $walker));
     }
 
     public function testVariableWithHtmlspecialcharsModifierIsClean(): void
     {
         $walker = new UnescapedVariableWalker();
-        $this->assertCount(0, $this->issues('{$name|htmlspecialchars}', $walker));
+        // |htmlspecialchars is not a standard Smarty modifier — should still warn
+        $this->assertCount(1, $this->issues('{$name|htmlspecialchars}', $walker));
     }
 
     public function testVariableWithNonEscapeModifierWarns(): void

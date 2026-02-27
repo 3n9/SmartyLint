@@ -25,7 +25,7 @@ use SmartyLint\IssueCollector;
 final class UnescapedVariableWalker implements NodeWalker
 {
     /** Modifier names that are considered safe HTML-escaping. */
-    private const ESCAPE_MODIFIERS = ['escape', 'h', 'htmlspecialchars', 'htmlentities'];
+    private const ESCAPE_MODIFIERS = ['escape'];
 
     public function onNode(Node $node, string $path, IssueCollector $issues): void
     {

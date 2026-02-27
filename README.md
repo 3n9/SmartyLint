@@ -348,11 +348,11 @@ php bin/smarty-lint --enable UnescapedVariable --recursive templates/
 
 {* OK *}
 {$name|escape}
-{$name|h}
-{$name|htmlspecialchars}
+{$name|escape:'html'}
+{$name|escape:'htmlall'}
 ```
 
-Recognised escape modifiers: `escape`, `h`, `htmlspecialchars`, `htmlentities`.
+The recognised escape modifier is `escape` (all `escape:*` type variants are covered).
 
 ---
 
