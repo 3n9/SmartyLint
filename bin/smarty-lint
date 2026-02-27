@@ -1,0 +1,48 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$autoloadCandidates = [
+    __DIR__ . '/../vendor/autoload.php',
+    __DIR__ . '/../../SmartyAST/vendor/autoload.php',
+];
+
+if (\Phar::running(false) === '') {
+    foreach ($autoloadCandidates as $candidate) {
+        if (is_file($candidate)) {
+            require $candidate;
+        }
+    }
+}
+
+spl_autoload_register(static function (string $class): void {
+    if (str_starts_with($class, 'SmartyLint\\')) {
+        $relative = substr($class, strlen('SmartyLint\\'));
+        $path = __DIR__ . '/../src/' . str_replace('\\', '/', $relative) . '.php';
+        if (is_file($path)) {
+            require $path;
+        }
+        return;
+    }
+
+    if (str_starts_with($class, 'SmartyAst\\')) {
+        $relative = substr($class, strlen('SmartyAst\\'));
+        $path = __DIR__ . '/../vendor/3n9/smarty-ast/src/' . str_replace('\\', '/', $relative) . '.php';
+        if (is_file($path)) {
+            require $path;
+        }
+        return;
+    }
+
+    if (str_starts_with($class, 'Dev\\Smarty\\')) {
+        $relative = substr($class, strlen('Dev\\Smarty\\'));
+        $path = __DIR__ . '/../../SmartyAST/src/' . str_replace('\\', '/', $relative) . '.php';
+        if (is_file($path)) {
+            require $path;
+        }
+    }
+});
+
+$application = new SmartyLint\LintApplication();
+exit($application->run($argv));

@@ -1,0 +1,6 @@
+/vendor/
+/dist/
+/.phpunit.result.cache
+/.smartylint-cache.json
+/.smartylint-cache.json
+tests/Fixtures/.smartylint-cache.json
