@@ -53,7 +53,13 @@ final class BinExtendedTest extends LintTestCase
             }
 
             $file = $dir . '/' . $entry;
-            is_dir($file) ? $this->removeTmpDir($file) : unlink($file);
+            if (is_link($file)) {
+                unlink($file);
+            } elseif (is_dir($file)) {
+                $this->removeTmpDir($file);
+            } else {
+                unlink($file);
+            }
             // Remove from tempFiles if tracked
             $this->tempFiles = array_values(array_filter($this->tempFiles, static fn (string $f): bool => $f !== $file));
         }
