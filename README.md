@@ -42,6 +42,7 @@ php bin/smarty-lint [options] <file|dir> [...]
 | `--errors-only` | Suppress warnings; only report `ERROR` severity issues |
 | `--exclude <pattern>` | Exclude files matching a glob pattern (repeatable) |
 | `--template-root <path>` | Base directory for resolving `{include}` / `{extends}` paths |
+| `--max-depth <n>` | Maximum recursion depth for `--recursive` directory scans (`0` = root directory only) |
 | `--version`, `-V` | Print version and exit |
 
 ### Exit codes
@@ -150,6 +151,7 @@ Create `.smartylintrc.json` in the directory where you run `smarty-lint` (usuall
 {
     "templateRoot": "templates",
     "maxNestingDepth": 4,
+    "maxScanDepth": 3,
     "disabledRules": ["DeprecatedTag"],
     "excludePatterns": ["*/vendor/*", "*/generated/*"]
 }
@@ -159,6 +161,7 @@ Create `.smartylintrc.json` in the directory where you run `smarty-lint` (usuall
 |-----|------|-------------|
 | `templateRoot` | string | Base directory for resolving `{include}` / `{extends}` paths |
 | `maxNestingDepth` | int | Maximum block nesting depth before `DeepNestingWalker` warns (default `5`) |
+| `maxScanDepth` | int | Maximum depth for recursive directory scans (`0` = root directory only, omitted = unlimited) |
 | `disabledRules` | string[] | Walker names to disable (case-insensitive): `DeprecatedTag`, `RelativePath`, `BlockStructure`, `IncludeParameter`, `UnusedCapture`, `EmptyBlock`, `DeepNesting` |
 | `excludePatterns` | string[] | Glob patterns for files to skip |
 
@@ -340,6 +343,7 @@ $config = new LintConfig(
     disabledRules: ['DeprecatedTag'],
     excludePatterns: ['*/generated/*'],
     maxNestingDepth: 4,
+    maxScanDepth: 3,
 );
 
 $cache = new LintCache('/tmp/smartylint.cache');

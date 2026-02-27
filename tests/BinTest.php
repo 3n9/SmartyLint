@@ -132,6 +132,44 @@ final class BinTest extends LintTestCase
         $this->assertSame(0, $exit);
     }
 
+    public function testRecursiveMaxDepthCliLimitsScannedFiles(): void
+    {
+        $tmpDir = sys_get_temp_dir() . '/smartylint_depth_' . uniqid();
+        mkdir($tmpDir);
+        mkdir($tmpDir . '/level1');
+        mkdir($tmpDir . '/level1/level2');
+
+        file_put_contents($tmpDir . '/root.tpl', '{php}bad{/php}');
+        file_put_contents($tmpDir . '/level1/one.tpl', '{php}bad{/php}');
+        file_put_contents($tmpDir . '/level1/level2/two.tpl', '{php}bad{/php}');
+
+        [$exit, $stdout] = $this->runBin(['--json', '--recursive', '--max-depth', '0', $tmpDir]);
+        $issues = json_decode($stdout, true) ?? [];
+
+        foreach ([$tmpDir . '/level1/level2/two.tpl', $tmpDir . '/level1/one.tpl', $tmpDir . '/root.tpl'] as $f) {
+            if (is_file($f)) {
+                unlink($f);
+            }
+        }
+        @rmdir($tmpDir . '/level1/level2');
+        @rmdir($tmpDir . '/level1');
+        @rmdir($tmpDir);
+
+        $this->assertSame(1, $exit);
+        foreach ($issues as $issue) {
+            $this->assertStringContainsString('root.tpl', $issue['path']);
+            $this->assertStringNotContainsString('level1/one.tpl', $issue['path']);
+            $this->assertStringNotContainsString('level1/level2/two.tpl', $issue['path']);
+        }
+    }
+
+    public function testRecursiveMaxDepthRejectsInvalidValues(): void
+    {
+        [$exit, , $stderr] = $this->runBin(['--recursive', '--max-depth', '-1', $this->fixture('errors')]);
+        $this->assertSame(1, $exit);
+        $this->assertStringContainsString('Invalid --max-depth value', $stderr);
+    }
+
     // ------------------------------------------------------------------
     // Deprecated tags
     // ------------------------------------------------------------------

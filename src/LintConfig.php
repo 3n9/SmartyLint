@@ -15,12 +15,14 @@ final class LintConfig
      * @param list<string>   $disabledRules   Walker short names to disable, e.g. ['DeprecatedTag', 'RelativePath'].
      * @param list<string>   $excludePatterns Glob patterns for files to exclude from linting.
      * @param int            $maxNestingDepth Maximum allowed block nesting depth (DeepNestingWalker threshold).
+     * @param int|null       $maxScanDepth    Maximum recursive directory scan depth; null means unlimited.
      */
     public function __construct(
         public readonly ?string $templateRoot = null,
         public readonly array $disabledRules = [],
         public readonly array $excludePatterns = [],
         public readonly int $maxNestingDepth = 5,
+        public readonly ?int $maxScanDepth = null,
     ) {
     }
 
@@ -62,7 +64,11 @@ final class LintConfig
             ? $data['maxNestingDepth']
             : 5;
 
-        return new self($templateRoot, $disabledRules, $excludePatterns, $maxNestingDepth);
+        $maxScanDepth = isset($data['maxScanDepth']) && is_int($data['maxScanDepth']) && $data['maxScanDepth'] >= 0
+            ? $data['maxScanDepth']
+            : null;
+
+        return new self($templateRoot, $disabledRules, $excludePatterns, $maxNestingDepth, $maxScanDepth);
     }
 
     /**
@@ -75,12 +81,14 @@ final class LintConfig
         array $disabledRules = [],
         array $excludePatterns = [],
         ?int $maxNestingDepth = null,
+        ?int $maxScanDepth = null,
     ): self {
         return new self(
             templateRoot: $templateRoot ?? $this->templateRoot,
             disabledRules: $disabledRules !== [] ? $disabledRules : $this->disabledRules,
             excludePatterns: array_values(array_unique(array_merge($this->excludePatterns, $excludePatterns))),
             maxNestingDepth: $maxNestingDepth ?? $this->maxNestingDepth,
+            maxScanDepth: $maxScanDepth ?? $this->maxScanDepth,
         );
     }
 }

@@ -1076,6 +1076,34 @@ final class BinExtendedTest extends LintTestCase
         }
     }
 
+    public function testConfigFileMaxScanDepth(): void
+    {
+        $tmpDir = sys_get_temp_dir() . '/smartylint_cfgdepth_' . uniqid();
+        mkdir($tmpDir);
+        mkdir($tmpDir . '/level1');
+        mkdir($tmpDir . '/level1/level2');
+
+        file_put_contents($tmpDir . '/root.tpl', '{php}bad{/php}');
+        file_put_contents($tmpDir . '/level1/one.tpl', '{php}bad{/php}');
+        file_put_contents($tmpDir . '/level1/level2/two.tpl', '{php}bad{/php}');
+        file_put_contents($tmpDir . '/.smartylintrc.json', json_encode([
+            'maxScanDepth' => 1,
+        ]));
+
+        $bin = realpath(__DIR__ . '/../bin/smarty-lint');
+        $cmd = 'php ' . escapeshellarg($bin) . ' --json --recursive ' . escapeshellarg($tmpDir);
+        exec('cd ' . escapeshellarg($tmpDir) . ' && ' . $cmd, $outputLines, $exitCode);
+        $issues = json_decode(implode('', $outputLines), true) ?? [];
+
+        $this->removeTmpDir($tmpDir);
+
+        $this->assertSame(1, $exitCode);
+        foreach ($issues as $issue) {
+            $this->assertStringNotContainsString('level1/level2/two.tpl', $issue['path']);
+        }
+        $this->assertNotEmpty($issues);
+    }
+
     // ------------------------------------------------------------------
     // EmptyBlockWalker via CLI
     // ------------------------------------------------------------------

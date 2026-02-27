@@ -28,6 +28,7 @@ final class LintApplication
         $paths = [];
         $excludePatterns = [];
         $templateRoot = null;
+        $maxScanDepth = null;
 
         for ($i = 0, $n = count($args); $i < $n; $i++) {
             $arg = $args[$i];
@@ -55,6 +56,20 @@ final class LintApplication
                 $templateRoot = $args[++$i] ?? null;
             } elseif (str_starts_with($arg, '--template-root=')) {
                 $templateRoot = substr($arg, 16);
+            } elseif ($arg === '--max-depth') {
+                $parsed = $this->parseMaxDepth($args[++$i] ?? null);
+                if ($parsed === null) {
+                    fwrite(STDERR, "Invalid --max-depth value. Expected a non-negative integer.\n");
+                    return 1;
+                }
+                $maxScanDepth = $parsed;
+            } elseif (str_starts_with($arg, '--max-depth=')) {
+                $parsed = $this->parseMaxDepth(substr($arg, 12));
+                if ($parsed === null) {
+                    fwrite(STDERR, "Invalid --max-depth value. Expected a non-negative integer.\n");
+                    return 1;
+                }
+                $maxScanDepth = $parsed;
             } else {
                 $paths[] = $arg;
             }
@@ -83,6 +98,7 @@ final class LintApplication
         $config = LintConfig::fromFile($configPath)->withOverrides(
             templateRoot: $templateRoot,
             excludePatterns: $excludePatterns,
+            maxScanDepth: $maxScanDepth,
         );
 
         // ----------------------------------------------------------------
@@ -94,7 +110,7 @@ final class LintApplication
                 $filesToLint[] = $path;
             } elseif (is_dir($path)) {
                 if ($recursive) {
-                    $filesToLint = array_merge($filesToLint, self::findTemplateFiles($path));
+                    $filesToLint = array_merge($filesToLint, self::findTemplateFiles($path, $config->maxScanDepth));
                 } else {
                     fwrite(STDERR, "{$path}: is a directory (use --recursive to scan directories)\n");
                 }
@@ -167,11 +183,12 @@ final class LintApplication
         fwrite(STDERR, "  --errors-only           Suppress warnings; only report errors\n");
         fwrite(STDERR, "  --exclude <pattern>     Exclude files matching glob pattern (repeatable)\n");
         fwrite(STDERR, "  --template-root <path>  Base directory for resolving template includes\n");
+        fwrite(STDERR, "  --max-depth <n>         Maximum recursion depth for --recursive directory scans\n");
         fwrite(STDERR, "  --version, -V           Print version and exit\n");
     }
 
     /** @return list<string> */
-    private static function findTemplateFiles(string $dir): array
+    private static function findTemplateFiles(string $dir, ?int $maxDepth = null): array
     {
         $files = [];
         $iterator = new \RecursiveIteratorIterator(
@@ -179,6 +196,10 @@ final class LintApplication
             \RecursiveIteratorIterator::SELF_FIRST,
             \RecursiveIteratorIterator::CATCH_GET_CHILD,
         );
+
+        if ($maxDepth !== null) {
+            $iterator->setMaxDepth($maxDepth);
+        }
 
         foreach ($iterator as $file) {
             if ($file->isFile() && pathinfo($file->getPathname(), PATHINFO_EXTENSION) === 'tpl') {
@@ -188,5 +209,14 @@ final class LintApplication
 
         sort($files);
         return $files;
+    }
+
+    private function parseMaxDepth(mixed $value): ?int
+    {
+        if (!is_string($value) || $value === '' || preg_match('/^\d+$/', $value) !== 1) {
+            return null;
+        }
+
+        return (int) $value;
     }
 }
