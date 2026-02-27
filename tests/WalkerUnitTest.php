@@ -16,6 +16,7 @@ use SmartyLint\Walker\EmptyBlockWalker;
 use SmartyLint\Walker\ExitAwareNodeWalker;
 use SmartyLint\Walker\NodeWalker;
 use SmartyLint\Walker\RelativePathWalker;
+use SmartyLint\Walker\UnusedAssignWalker;
 use SmartyLint\Walker\UnusedCaptureWalker;
 
 /**
@@ -600,6 +601,75 @@ final class WalkerUnitTest extends TestCase
 
         $walker->reset();
         $ast2 = $this->parse('{block name="a"}x{/block}');
+        $issues2 = new IssueCollector();
+        $this->walkTree($ast2, $walker, $issues2);
+        $walker->finalize($this->path, $issues2);
+        $this->assertCount(0, $issues2->all());
+    }
+
+    // -------------------------------------------------------------------------
+    // UnusedAssignWalker
+    // -------------------------------------------------------------------------
+
+    public function testUnusedAssignWarns(): void
+    {
+        $walker = new UnusedAssignWalker();
+        $ast = $this->parse('{assign var="x" value="hello"}');
+        $issues = new IssueCollector();
+        $this->walkTree($ast, $walker, $issues);
+        $walker->finalize($this->path, $issues);
+
+        $this->assertCount(1, $issues->all());
+        $this->assertSame('WARNING', $issues->all()[0]->severity);
+        $this->assertStringContainsString('$x', $issues->all()[0]->message);
+    }
+
+    public function testUsedAssignProducesNoWarning(): void
+    {
+        $walker = new UnusedAssignWalker();
+        $ast = $this->parse('{assign var="x" value="hello"}{$x}');
+        $issues = new IssueCollector();
+        $this->walkTree($ast, $walker, $issues);
+        $walker->finalize($this->path, $issues);
+
+        $this->assertCount(0, $issues->all());
+    }
+
+    public function testShorthandAssignUnusedWarns(): void
+    {
+        $walker = new UnusedAssignWalker();
+        $ast = $this->parse('{assign $y = "world"}');
+        $issues = new IssueCollector();
+        $this->walkTree($ast, $walker, $issues);
+        $walker->finalize($this->path, $issues);
+
+        $this->assertCount(1, $issues->all());
+        $this->assertStringContainsString('$y', $issues->all()[0]->message);
+    }
+
+    public function testAssignUsedAsIncludeArgumentProducesNoWarning(): void
+    {
+        $walker = new UnusedAssignWalker();
+        $ast = $this->parse('{assign var="name" value="Alice"}{include file="t.tpl" label=$name}');
+        $issues = new IssueCollector();
+        $this->walkTree($ast, $walker, $issues);
+        $walker->finalize($this->path, $issues);
+
+        $this->assertCount(0, $issues->all());
+    }
+
+    public function testUnusedAssignResetBetweenFiles(): void
+    {
+        $walker = new UnusedAssignWalker();
+
+        $ast1 = $this->parse('{assign var="x" value="a"}');
+        $issues1 = new IssueCollector();
+        $this->walkTree($ast1, $walker, $issues1);
+        $walker->finalize($this->path, $issues1);
+        $this->assertCount(1, $issues1->all());
+
+        $walker->reset();
+        $ast2 = $this->parse('{assign var="x" value="a"}{$x}');
         $issues2 = new IssueCollector();
         $this->walkTree($ast2, $walker, $issues2);
         $walker->finalize($this->path, $issues2);

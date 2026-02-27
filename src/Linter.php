@@ -15,6 +15,7 @@ use SmartyLint\Walker\ExitAwareNodeWalker;
 use SmartyLint\Walker\IncludeParameterWalker;
 use SmartyLint\Walker\NodeWalker;
 use SmartyLint\Walker\RelativePathWalker;
+use SmartyLint\Walker\UnusedAssignWalker;
 use SmartyLint\Walker\UnusedCaptureWalker;
 
 final class Linter
@@ -25,6 +26,7 @@ final class Linter
     private UnusedCaptureWalker $unusedCaptureWalker;
     private DeepNestingWalker $deepNestingWalker;
     private DuplicateBlockNameWalker $duplicateBlockNameWalker;
+    private UnusedAssignWalker $unusedAssignWalker;
     private IncludeCycleDetector $includeCycleDetector;
     /** @var list<NodeWalker> */
     private array $walkers;
@@ -39,6 +41,7 @@ final class Linter
         $this->unusedCaptureWalker = new UnusedCaptureWalker();
         $this->deepNestingWalker = new DeepNestingWalker($config->maxNestingDepth);
         $this->duplicateBlockNameWalker = new DuplicateBlockNameWalker();
+        $this->unusedAssignWalker = new UnusedAssignWalker();
         $this->includeCycleDetector = new IncludeCycleDetector($includeParser);
 
         $disabled = array_map('strtolower', $config->disabledRules);
@@ -52,6 +55,7 @@ final class Linter
             'emptyblock'         => new EmptyBlockWalker(),
             'deepnesting'        => $this->deepNestingWalker,
             'duplicateblockname' => $this->duplicateBlockNameWalker,
+            'unusedassign'       => $this->unusedAssignWalker,
         ];
 
         $this->walkers = [];
@@ -94,10 +98,12 @@ final class Linter
             $this->includeParameterWalker->reset();
             $this->deepNestingWalker->reset();
             $this->duplicateBlockNameWalker->reset();
+            $this->unusedAssignWalker->reset();
             $this->includeCycleDetector->detect($normalizedPath, $result, $collector);
             $this->walkNode($result->ast, $normalizedPath, $collector);
             $this->unusedCaptureWalker->finalize($normalizedPath, $collector);
             $this->duplicateBlockNameWalker->finalize($normalizedPath, $collector);
+            $this->unusedAssignWalker->finalize($normalizedPath, $collector);
             $dependencies = array_merge(
                 $dependencies,
                 $this->includeParameterWalker->getDependencies(),

@@ -162,7 +162,7 @@ Create `.smartylintrc.json` in the directory where you run `smarty-lint` (usuall
 | `templateRoot` | string | Base directory for resolving `{include}` / `{extends}` paths |
 | `maxNestingDepth` | int | Maximum block nesting depth before `DeepNestingWalker` warns (default `5`) |
 | `maxScanDepth` | int | Maximum depth for recursive directory scans (`0` = root directory only, omitted = unlimited) |
-| `disabledRules` | string[] | Walker names to disable (case-insensitive): `DeprecatedTag`, `RelativePath`, `BlockStructure`, `IncludeParameter`, `UnusedCapture`, `EmptyBlock`, `DeepNesting`, `DuplicateBlockName` |
+| `disabledRules` | string[] | Walker names to disable (case-insensitive): `DeprecatedTag`, `RelativePath`, `BlockStructure`, `IncludeParameter`, `UnusedCapture`, `EmptyBlock`, `DeepNesting`, `DuplicateBlockName`, `UnusedAssign` |
 | `excludePatterns` | string[] | Glob patterns for files to skip |
 
 CLI flags take precedence over the config file.
@@ -306,6 +306,20 @@ Warns when `{block name="..."}` is declared more than once in the same template 
 {* WARNING: Duplicate block name 'header': already defined in this template. *}
 {block name="header"}<h2>Oops</h2>{/block}
 ```
+
+---
+
+### UnusedAssignWalker
+
+Warns when `{assign var="x"}` (or the shorthand `{assign $x = ...}`) sets a variable that is never referenced anywhere in the same template — either as a print expression or as a tag argument.
+
+```smarty
+{assign var="title" value="Hello"}
+{assign var="unused" value="world"}  {* WARNING: $unused is assigned but never used *}
+<h1>{$title}</h1>
+```
+
+Covers both the named (`var=`) and shorthand forms, as well as `{append}`.
 
 ---
 

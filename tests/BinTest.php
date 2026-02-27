@@ -468,4 +468,24 @@ final class BinTest extends LintTestCase
         // Enabled by default — should find issues
         $this->assertSame(1, $exit);
     }
+
+    // ------------------------------------------------------------------
+    // UnusedAssign
+    // ------------------------------------------------------------------
+
+    public function testDetectsUnusedAssign(): void
+    {
+        $issues = $this->runBinJson([$this->fixture('errors/unused_assign.tpl')]);
+        $this->assertHasIssue('WARNING', 'unused', $issues);
+    }
+
+    public function testUnusedAssignNotReportedWhenVarIsRead(): void
+    {
+        [$exit, $stdout] = $this->runBin(['--json', $this->fixture('errors/unused_assign.tpl')]);
+        $issues = json_decode($stdout, true) ?? [];
+        // Only 'unused' var should be flagged, not 'used'
+        foreach ($issues as $issue) {
+            $this->assertStringNotContainsString('$used', $issue['message']);
+        }
+    }
 }
