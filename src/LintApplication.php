@@ -150,9 +150,7 @@ final class LintApplication
         // ----------------------------------------------------------------
         // Run linting
         // ----------------------------------------------------------------
-        $configFingerprint = $config->strictRules !== []
-            ? md5(implode(',', $config->strictRules))
-            : '';
+        $configFingerprint = $this->configFingerprint($config);
         $cache = new LintCache($cachePathBase . '/.smartylint-cache.json', $configFingerprint);
         $engine = new LintEngine(null, null, $cache, $config);
         $issues = $engine->lintFiles($filesToLint, $findUnused);
@@ -228,5 +226,24 @@ final class LintApplication
         }
 
         return (int) $value;
+    }
+
+    private function configFingerprint(LintConfig $config): string
+    {
+        $payload = [
+            'templateRoot' => $config->templateRoot,
+            'disabledRules' => array_values(array_map('strtolower', $config->disabledRules)),
+            'excludePatterns' => array_values($config->excludePatterns),
+            'maxNestingDepth' => $config->maxNestingDepth,
+            'maxScanDepth' => $config->maxScanDepth,
+            'strictRules' => array_values(array_map('strtolower', $config->strictRules)),
+        ];
+
+        $json = json_encode($payload);
+        if ($json === false) {
+            return '';
+        }
+
+        return md5($json);
     }
 }

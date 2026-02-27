@@ -1110,6 +1110,33 @@ final class BinExtendedTest extends LintTestCase
         $this->assertNotEmpty($issues);
     }
 
+    public function testCacheInvalidatesWhenDisabledRulesChange(): void
+    {
+        $tmpDir = sys_get_temp_dir() . '/smartylint_cfgcache_' . uniqid();
+        mkdir($tmpDir);
+        file_put_contents($tmpDir . '/t.tpl', '{php}echo 1;{/php}');
+
+        $bin = realpath(__DIR__ . '/../bin/smarty-lint');
+        $cmd = 'php ' . escapeshellarg($bin) . ' --json ' . escapeshellarg($tmpDir . '/t.tpl');
+
+        exec('cd ' . escapeshellarg($tmpDir) . ' && ' . $cmd, $firstOutputLines, $firstExitCode);
+        $firstIssues = json_decode(implode('', $firstOutputLines), true) ?? [];
+        $this->assertNotEmpty($firstIssues);
+
+        file_put_contents($tmpDir . '/.smartylintrc.json', json_encode([
+            'disabledRules' => ['DeprecatedTag'],
+        ]));
+
+        exec('cd ' . escapeshellarg($tmpDir) . ' && ' . $cmd, $secondOutputLines, $secondExitCode);
+        $secondIssues = json_decode(implode('', $secondOutputLines), true) ?? [];
+
+        $this->removeTmpDir($tmpDir);
+
+        $this->assertSame(1, $firstExitCode);
+        $this->assertSame(0, $secondExitCode);
+        $this->assertEmpty($secondIssues);
+    }
+
     // ------------------------------------------------------------------
     // EmptyBlockWalker via CLI
     // ------------------------------------------------------------------
