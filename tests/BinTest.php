@@ -505,8 +505,9 @@ final class BinTest extends LintTestCase
             '--enable', 'UnescapedVariable',
             $this->fixture('errors/unescaped_var.tpl'),
         ]);
-        // $name (bare) and $title|upper should be flagged; $safe|escape and $also_safe|h should not
+        // $name (bare), $title|upper and {$a + $b} should be flagged;
+        // $safe|escape and $also_safe|escape:'html' should not.
         $flagged = array_filter($issues, static fn ($i) => str_contains($i['message'], 'escaping'));
-        $this->assertCount(2, array_values($flagged));
+        $this->assertCount(3, array_values($flagged));
     }
 }

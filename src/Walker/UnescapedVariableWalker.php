@@ -8,6 +8,7 @@ use SmartyAst\Ast\ModifierChainExpressionNode;
 use SmartyAst\Ast\Node;
 use SmartyAst\Ast\PrintNode;
 use SmartyAst\Ast\VariableExpressionNode;
+use SmartyLint\AstWalkerHelpers;
 use SmartyLint\IssueCollector;
 
 /**
@@ -15,8 +16,8 @@ use SmartyLint\IssueCollector;
  *
  * Smarty does not auto-escape output, so {$var} in a template renders the
  * raw value and is a potential XSS vector. This walker flags any PrintNode
- * whose expression is not guarded by one of the recognised escape modifiers:
- * escape, h, htmlspecialchars, htmlentities.
+ * whose expression contains variable references but is not guarded by the
+ * recognised escape modifier: escape (including escape:'html', etc).
  *
  * This rule is OFF by default. Enable it via:
  *   - CLI:    --enable UnescapedVariable
@@ -34,18 +35,6 @@ final class UnescapedVariableWalker implements NodeWalker
         }
 
         $expr = $node->expression;
-
-        if ($expr instanceof VariableExpressionNode) {
-            // {$var} with no modifiers at all.
-            $issues->add(
-                $path,
-                $node->span->start->line,
-                $node->span->start->column,
-                'WARNING',
-                "Variable '\${$expr->name}' is printed without an escaping modifier (e.g. |escape).",
-            );
-            return;
-        }
 
         if ($expr instanceof ModifierChainExpressionNode) {
             foreach ($expr->modifiers as $modifier) {
@@ -67,6 +56,23 @@ final class UnescapedVariableWalker implements NodeWalker
                 'WARNING',
                 "Variable '{$label}' is printed without an escaping modifier (e.g. |escape).",
             );
+            return;
         }
+
+        // For any non-modifier expression, warn if it references variables
+        // (e.g. {$a + $b}, {$obj->prop}, etc).
+        $varPaths = AstWalkerHelpers::expressionVariablePaths($expr);
+        if ($varPaths === []) {
+            return;
+        }
+
+        $label = $expr instanceof VariableExpressionNode ? "\${$expr->name}" : 'expression';
+        $issues->add(
+            $path,
+            $node->span->start->line,
+            $node->span->start->column,
+            'WARNING',
+            "Variable '{$label}' is printed without an escaping modifier (e.g. |escape).",
+        );
     }
 }

@@ -718,6 +718,14 @@ final class WalkerUnitTest extends TestCase
         $this->assertSame('WARNING', $issues[0]->severity);
     }
 
+    public function testCompositeExpressionWithoutEscapeWarns(): void
+    {
+        $walker = new UnescapedVariableWalker();
+        $issues = $this->issues('{$a + $b}', $walker);
+        $this->assertCount(1, $issues);
+        $this->assertSame('WARNING', $issues[0]->severity);
+    }
+
     public function testMultipleUnescapedVarsReportAll(): void
     {
         $walker = new UnescapedVariableWalker();
