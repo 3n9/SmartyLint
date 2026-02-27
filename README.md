@@ -162,7 +162,7 @@ Create `.smartylintrc.json` in the directory where you run `smarty-lint` (usuall
 | `templateRoot` | string | Base directory for resolving `{include}` / `{extends}` paths |
 | `maxNestingDepth` | int | Maximum block nesting depth before `DeepNestingWalker` warns (default `5`) |
 | `maxScanDepth` | int | Maximum depth for recursive directory scans (`0` = root directory only, omitted = unlimited) |
-| `disabledRules` | string[] | Walker names to disable (case-insensitive): `DeprecatedTag`, `RelativePath`, `BlockStructure`, `IncludeParameter`, `UnusedCapture`, `EmptyBlock`, `DeepNesting` |
+| `disabledRules` | string[] | Walker names to disable (case-insensitive): `DeprecatedTag`, `RelativePath`, `BlockStructure`, `IncludeParameter`, `UnusedCapture`, `EmptyBlock`, `DeepNesting`, `DuplicateBlockName` |
 | `excludePatterns` | string[] | Glob patterns for files to skip |
 
 CLI flags take precedence over the config file.
@@ -293,6 +293,19 @@ Warns when block tags are nested deeper than `maxNestingDepth` (default `5`, con
 ```
 
 Only the outermost violating block is reported (inner blocks are implied).
+
+---
+
+### DuplicateBlockNameWalker
+
+Warns when `{block name="..."}` is declared more than once in the same template file. Duplicate block names cause Smarty to silently use the first definition and ignore all subsequent ones.
+
+```smarty
+{block name="header"}<h1>Title</h1>{/block}
+{block name="content"}<p>Main</p>{/block}
+{* WARNING: Duplicate block name 'header': already defined in this template. *}
+{block name="header"}<h2>Oops</h2>{/block}
+```
 
 ---
 

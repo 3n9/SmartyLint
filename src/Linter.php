@@ -9,6 +9,7 @@ use SmartyAst\Parser\SmartyParser;
 use SmartyLint\Walker\BlockStructureWalker;
 use SmartyLint\Walker\DeepNestingWalker;
 use SmartyLint\Walker\DeprecatedTagWalker;
+use SmartyLint\Walker\DuplicateBlockNameWalker;
 use SmartyLint\Walker\EmptyBlockWalker;
 use SmartyLint\Walker\ExitAwareNodeWalker;
 use SmartyLint\Walker\IncludeParameterWalker;
@@ -23,6 +24,7 @@ final class Linter
     private IncludeParameterWalker $includeParameterWalker;
     private UnusedCaptureWalker $unusedCaptureWalker;
     private DeepNestingWalker $deepNestingWalker;
+    private DuplicateBlockNameWalker $duplicateBlockNameWalker;
     private IncludeCycleDetector $includeCycleDetector;
     /** @var list<NodeWalker> */
     private array $walkers;
@@ -36,18 +38,20 @@ final class Linter
         $this->includeParameterWalker = new IncludeParameterWalker($includeParser);
         $this->unusedCaptureWalker = new UnusedCaptureWalker();
         $this->deepNestingWalker = new DeepNestingWalker($config->maxNestingDepth);
+        $this->duplicateBlockNameWalker = new DuplicateBlockNameWalker();
         $this->includeCycleDetector = new IncludeCycleDetector($includeParser);
 
         $disabled = array_map('strtolower', $config->disabledRules);
 
         $allWalkers = [
-            'blockstructure' => new BlockStructureWalker(),
-            'deprecatedtag'  => new DeprecatedTagWalker(),
-            'relativepath'   => new RelativePathWalker(),
-            'includeparameter' => $this->includeParameterWalker,
-            'unusedcapture'  => $this->unusedCaptureWalker,
-            'emptyblock'     => new EmptyBlockWalker(),
-            'deepnesting'    => $this->deepNestingWalker,
+            'blockstructure'     => new BlockStructureWalker(),
+            'deprecatedtag'      => new DeprecatedTagWalker(),
+            'relativepath'       => new RelativePathWalker(),
+            'includeparameter'   => $this->includeParameterWalker,
+            'unusedcapture'      => $this->unusedCaptureWalker,
+            'emptyblock'         => new EmptyBlockWalker(),
+            'deepnesting'        => $this->deepNestingWalker,
+            'duplicateblockname' => $this->duplicateBlockNameWalker,
         ];
 
         $this->walkers = [];
@@ -89,9 +93,11 @@ final class Linter
             $this->unusedCaptureWalker->reset();
             $this->includeParameterWalker->reset();
             $this->deepNestingWalker->reset();
+            $this->duplicateBlockNameWalker->reset();
             $this->includeCycleDetector->detect($normalizedPath, $result, $collector);
             $this->walkNode($result->ast, $normalizedPath, $collector);
             $this->unusedCaptureWalker->finalize($normalizedPath, $collector);
+            $this->duplicateBlockNameWalker->finalize($normalizedPath, $collector);
             $dependencies = array_merge(
                 $dependencies,
                 $this->includeParameterWalker->getDependencies(),

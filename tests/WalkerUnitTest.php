@@ -11,6 +11,7 @@ use SmartyLint\IssueCollector;
 use SmartyLint\Walker\BlockStructureWalker;
 use SmartyLint\Walker\DeepNestingWalker;
 use SmartyLint\Walker\DeprecatedTagWalker;
+use SmartyLint\Walker\DuplicateBlockNameWalker;
 use SmartyLint\Walker\EmptyBlockWalker;
 use SmartyLint\Walker\ExitAwareNodeWalker;
 use SmartyLint\Walker\NodeWalker;
@@ -543,6 +544,65 @@ final class WalkerUnitTest extends TestCase
         $ast2 = $this->parse('{if $a}{if $b}ok{/if}{/if}');
         $issues2 = new IssueCollector();
         $this->walkTreeExitAware($ast2, $walker, $issues2);
+        $this->assertCount(0, $issues2->all());
+    }
+
+    // -------------------------------------------------------------------------
+    // DuplicateBlockNameWalker
+    // -------------------------------------------------------------------------
+
+    public function testDuplicateBlockNameWarns(): void
+    {
+        $walker = new DuplicateBlockNameWalker();
+        $ast = $this->parse('{block name="header"}A{/block}{block name="header"}B{/block}');
+        $issues = new IssueCollector();
+        $this->walkTree($ast, $walker, $issues);
+        $walker->finalize($this->path, $issues);
+
+        $this->assertCount(1, $issues->all());
+        $this->assertSame('WARNING', $issues->all()[0]->severity);
+        $this->assertStringContainsString('header', $issues->all()[0]->message);
+    }
+
+    public function testTripleDuplicateBlockNameReportsTwoWarnings(): void
+    {
+        $walker = new DuplicateBlockNameWalker();
+        $ast = $this->parse(
+            '{block name="x"}A{/block}{block name="x"}B{/block}{block name="x"}C{/block}',
+        );
+        $issues = new IssueCollector();
+        $this->walkTree($ast, $walker, $issues);
+        $walker->finalize($this->path, $issues);
+
+        $this->assertCount(2, $issues->all());
+    }
+
+    public function testDistinctBlockNamesProduceNoWarning(): void
+    {
+        $walker = new DuplicateBlockNameWalker();
+        $ast = $this->parse('{block name="header"}A{/block}{block name="content"}B{/block}');
+        $issues = new IssueCollector();
+        $this->walkTree($ast, $walker, $issues);
+        $walker->finalize($this->path, $issues);
+
+        $this->assertCount(0, $issues->all());
+    }
+
+    public function testDuplicateBlockNameResetBetweenFiles(): void
+    {
+        $walker = new DuplicateBlockNameWalker();
+
+        $ast1 = $this->parse('{block name="a"}x{/block}{block name="a"}y{/block}');
+        $issues1 = new IssueCollector();
+        $this->walkTree($ast1, $walker, $issues1);
+        $walker->finalize($this->path, $issues1);
+        $this->assertCount(1, $issues1->all());
+
+        $walker->reset();
+        $ast2 = $this->parse('{block name="a"}x{/block}');
+        $issues2 = new IssueCollector();
+        $this->walkTree($ast2, $walker, $issues2);
+        $walker->finalize($this->path, $issues2);
         $this->assertCount(0, $issues2->all());
     }
 }

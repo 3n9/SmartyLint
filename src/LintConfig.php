@@ -12,7 +12,7 @@ final class LintConfig
 {
     /**
      * @param string|null    $templateRoot    Base directory for resolving template includes (Smarty template_dir).
-     * @param list<string>   $disabledRules   Walker short names to disable, e.g. ['DeprecatedTag', 'RelativePath'].
+     * @param list<string>   $disabledRules   Walker short names to disable, e.g. ['DeprecatedTag', 'RelativePath', 'DuplicateBlockName'].
      * @param list<string>   $excludePatterns Glob patterns for files to exclude from linting.
      * @param int            $maxNestingDepth Maximum allowed block nesting depth (DeepNestingWalker threshold).
      * @param int|null       $maxScanDepth    Maximum recursive directory scan depth; null means unlimited.

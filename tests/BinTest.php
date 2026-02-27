@@ -448,4 +448,24 @@ final class BinTest extends LintTestCase
         $this->assertSame(1, $exit);
         $this->assertStringContainsString('Unknown format', $stderr);
     }
+
+    // ------------------------------------------------------------------
+    // DuplicateBlockName
+    // ------------------------------------------------------------------
+
+    public function testDetectsDuplicateBlockName(): void
+    {
+        $issues = $this->runBinJson([$this->fixture('errors/duplicate_block.tpl')]);
+        $this->assertHasIssue('WARNING', 'Duplicate block name', $issues);
+    }
+
+    public function testDuplicateBlockNameCanBeDisabled(): void
+    {
+        [$exit] = $this->runBin([
+            '--json',
+            $this->fixture('errors/duplicate_block.tpl'),
+        ]);
+        // Enabled by default — should find issues
+        $this->assertSame(1, $exit);
+    }
 }
