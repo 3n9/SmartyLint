@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SmartyLint\Walker;
 
-use SmartyAst\Ast\BlockTagNode;
 use SmartyAst\Ast\Node;
 use SmartyAst\Ast\PrintNode;
 use SmartyAst\Ast\TagNode;
@@ -46,7 +45,7 @@ final class SuperglobalAccessWalker implements NodeWalker
             return;
         }
 
-        $tag = $node instanceof TagNode ? $node : ($node instanceof BlockTagNode ? $node->openTag : null);
+        $tag = $node instanceof TagNode ? $node : null;
         if ($tag === null) {
             return;
         }

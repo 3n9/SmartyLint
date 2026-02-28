@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SmartyLint\Walker;
 
-use SmartyAst\Ast\BlockTagNode;
 use SmartyAst\Ast\Node;
 use SmartyAst\Ast\PrintNode;
 use SmartyAst\Ast\TagNode;
@@ -43,8 +42,6 @@ final class UnusedAssignWalker implements NodeWalker
         $tag = null;
         if ($node instanceof TagNode) {
             $tag = $node;
-        } elseif ($node instanceof BlockTagNode) {
-            $tag = $node->openTag;
         }
 
         if ($tag !== null) {

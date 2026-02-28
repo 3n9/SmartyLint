@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace SmartyLint\Walker;
 
-use SmartyAst\Ast\BlockTagNode;
 use SmartyAst\Ast\Node;
-use SmartyAst\Ast\TagLike;
 use SmartyAst\Ast\TagNode;
 use SmartyLint\AstWalkerHelpers;
 use SmartyLint\IssueCollector;
@@ -30,7 +28,7 @@ final class RelativePathWalker implements NodeWalker
     /** @return array{int,int,?string} */
     private function extractFileValueWithPosition(Node $node): array
     {
-        $tag = $node instanceof TagLike ? $node->resolveTag() : null;
+        $tag = $node instanceof TagNode ? $node : null;
         if ($tag === null) {
             return [$node->span->start->line, $node->span->start->column, null];
         }

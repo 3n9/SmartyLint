@@ -8,7 +8,7 @@ use SmartyAst\Ast\LiteralExpressionNode;
 use SmartyAst\Ast\ModifierChainExpressionNode;
 use SmartyAst\Ast\Node;
 use SmartyAst\Ast\PrintNode;
-use SmartyAst\Ast\TagLike;
+use SmartyAst\Ast\TagNode;
 use SmartyAst\Ast\VariableExpressionNode;
 use SmartyLint\IssueCollector;
 
@@ -58,7 +58,7 @@ final class ModifierTypeMismatchWalker implements NodeWalker
         }
 
         // Also check modifier chains inside tag arguments.
-        if ($node instanceof TagLike) {
+        if ($node instanceof TagNode) {
             foreach ($node->resolveTag()->arguments as $arg) {
                 if ($arg->value instanceof ModifierChainExpressionNode) {
                     $this->checkChain($arg->value, $path, $issues);

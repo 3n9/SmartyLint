@@ -10,7 +10,7 @@ use SmartyAst\Ast\ExpressionNode;
 use SmartyAst\Ast\ModifierChainExpressionNode;
 use SmartyAst\Ast\Node;
 use SmartyAst\Ast\PrintNode;
-use SmartyAst\Ast\TagLike;
+use SmartyAst\Ast\TagNode;
 use SmartyAst\Ast\UnaryExpressionNode;
 use SmartyLint\IssueCollector;
 
@@ -42,7 +42,7 @@ final class ComplexExpressionWalker implements NodeWalker
         }
 
         // Check modifier chains and complex expressions inside all tag arguments.
-        if ($node instanceof TagLike) {
+        if ($node instanceof TagNode) {
             foreach ($node->resolveTag()->arguments as $arg) {
                 $this->checkModifierChain($arg->value, $path, $issues);
                 $this->checkConditionOperands($arg->value, $path, $issues);

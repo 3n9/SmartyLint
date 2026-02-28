@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace SmartyLint\Analysis;
 
-use SmartyAst\Ast\BlockTagNode;
 use SmartyAst\Ast\Node;
 use SmartyAst\Ast\PrintNode;
-use SmartyAst\Ast\TagLike;
 use SmartyAst\Ast\TagNode;
 use SmartyAst\ParseResult;
 use SmartyLint\AstWalkerHelpers;
@@ -112,34 +110,26 @@ final class TemplateGraph
             }
         }
 
-        $tag = null;
-        if ($node instanceof TagNode) {
-            $tag = $node;
-        } elseif ($node instanceof BlockTagNode) {
-            $tag = $node->openTag;
-        }
-
-        if ($tag !== null) {
-            foreach ($tag->arguments as $arg) {
-                foreach (AstWalkerHelpers::expressionVariablePaths($arg->value) as $v) {
-                    $this->variablesUsed[$path][] = $v;
-                }
-            }
-        }
-
-        if (!($node instanceof TagLike)) {
+        // Only process TagNode directly; BlockTagNode openTags are now visited as
+        // TagNode children via BlockTagNode::children(), so no BlockTagNode fallback needed.
+        if (!($node instanceof TagNode)) {
             return;
         }
 
-        $tagNode = $node->resolveTag();
-        $name = strtolower($tagNode->name);
+        foreach ($node->arguments as $arg) {
+            foreach (AstWalkerHelpers::expressionVariablePaths($arg->value) as $v) {
+                $this->variablesUsed[$path][] = $v;
+            }
+        }
+
+        $name = strtolower($node->name);
 
         match ($name) {
-            'include'  => $this->processInclude($path, $tagNode, $includeParser),
-            'extends'  => $this->processExtends($path, $tagNode, $includeParser),
+            'include'  => $this->processInclude($path, $node, $includeParser),
+            'extends'  => $this->processExtends($path, $node, $includeParser),
             'block'    => $this->processBlock($path, $node),
-            'function' => $this->processFunction($path, $tagNode),
-            'call'     => $this->processCall($path, $tagNode),
+            'function' => $this->processFunction($path, $node),
+            'call'     => $this->processCall($path, $node),
             default    => null,
         };
     }
@@ -188,9 +178,8 @@ final class TemplateGraph
         }
     }
 
-    private function processBlock(string $path, Node $node): void
+    private function processBlock(string $path, TagNode $tagNode): void
     {
-        $tagNode = $node->resolveTag();
         $nameArg = null;
         foreach ($tagNode->arguments as $arg) {
             $argName = $arg->name !== null ? strtolower($arg->name) : null;
@@ -270,8 +259,8 @@ final class TemplateGraph
     /** @param array<string,true> $knownNames */
     private function collectShorthandCalls(string $path, Node $node, array $knownNames): void
     {
-        if ($node instanceof TagLike) {
-            $tagName = strtolower($node->resolveTag()->name);
+        if ($node instanceof TagNode) {
+            $tagName = strtolower($node->name);
             // Exclude the definition tag itself.
             if ($tagName !== 'function' && isset($knownNames[$tagName])) {
                 $this->functionCalls[$path][] = $tagName;

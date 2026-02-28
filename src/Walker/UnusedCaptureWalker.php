@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SmartyLint\Walker;
 
-use SmartyAst\Ast\BlockTagNode;
 use SmartyAst\Ast\Node;
 use SmartyAst\Ast\PrintNode;
 use SmartyAst\Ast\TagNode;
@@ -27,8 +26,8 @@ final class UnusedCaptureWalker implements NodeWalker
 
     public function onNode(Node $node, string $path, IssueCollector $issues): void
     {
-        if ($node instanceof BlockTagNode && strtolower($node->openTag->name) === 'capture') {
-            $capture = $this->captureFromTag($node->openTag);
+        if ($node instanceof TagNode && strtolower($node->name) === 'capture') {
+            $capture = $this->captureFromTag($node);
             if ($capture !== null) {
                 $key = $capture['type'] . '_' . $capture['name'];
                 $this->latestCapturesByKey[$key] = $capture + ['used' => false];
@@ -41,9 +40,8 @@ final class UnusedCaptureWalker implements NodeWalker
             }
         }
 
-        $tag = $node instanceof TagNode ? $node : ($node instanceof BlockTagNode ? $node->openTag : null);
-        if ($tag !== null) {
-            foreach ($tag->arguments as $argument) {
+        if ($node instanceof TagNode) {
+            foreach ($node->arguments as $argument) {
                 foreach (AstWalkerHelpers::expressionVariablePaths($argument->value) as $varPath) {
                     $this->variablePaths[] = $varPath;
                 }

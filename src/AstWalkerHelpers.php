@@ -8,7 +8,6 @@ use SmartyAst\Ast\ExpressionNode;
 use SmartyAst\Ast\LiteralExpressionNode;
 use SmartyAst\Ast\Node;
 use SmartyAst\Ast\TagArgumentNode;
-use SmartyAst\Ast\TagLike;
 use SmartyAst\Ast\TagNode;
 
 final class AstWalkerHelpers
@@ -21,8 +20,8 @@ final class AstWalkerHelpers
 
     public static function tagName(Node $node): ?string
     {
-        if ($node instanceof TagLike) {
-            return strtolower($node->resolveTag()->name);
+        if ($node instanceof TagNode) {
+            return strtolower($node->name);
         }
 
         return null;
@@ -31,9 +30,8 @@ final class AstWalkerHelpers
     /** @return array{int,int} */
     public static function tagStart(Node $node): array
     {
-        if ($node instanceof TagLike) {
-            $tag = $node->resolveTag();
-            return [$tag->span->start->line, $tag->span->start->column];
+        if ($node instanceof TagNode) {
+            return [$node->span->start->line, $node->span->start->column];
         }
 
         return [$node->span->start->line, $node->span->start->column];
