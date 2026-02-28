@@ -59,12 +59,12 @@ final class Linter
             'deepnesting'        => $this->deepNestingWalker,
             'duplicateblockname' => $this->duplicateBlockNameWalker,
             'unusedassign'       => $this->unusedAssignWalker,
+            'superglobalaccess'  => new SuperglobalAccessWalker(),
         ];
 
         // Strict (opt-in) walkers — only added when explicitly enabled.
         $strictWalkers = [
             'unescapedvariable'  => new UnescapedVariableWalker(),
-            'superglobalaccess'  => new SuperglobalAccessWalker(),
         ];
 
         $this->walkers = [];

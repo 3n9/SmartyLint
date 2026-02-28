@@ -20,9 +20,8 @@ use SmartyLint\IssueCollector;
  * Direct superglobal access bypasses input validation, makes templates harder
  * to test, and is a potential XSS / injection vector.
  *
- * This rule is OFF by default. Enable it via:
- *   - CLI:    --enable SuperglobalAccess
- *   - Config: { "strictRules": ["SuperglobalAccess"] }
+ * This rule is ON by default. Disable it via:
+ *   - Config: { "disabledRules": ["SuperglobalAccess"] }
  */
 final class SuperglobalAccessWalker implements NodeWalker
 {

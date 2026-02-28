@@ -244,7 +244,7 @@ Create `.smartylintrc.json` in the directory where you run `smarty-lint` (usuall
 | `maxNestingDepth` | int | Maximum block nesting depth before `DeepNestingWalker` warns (default `5`) |
 | `maxScanDepth` | int | Maximum depth for recursive directory scans (`0` = root directory only, omitted = unlimited) |
 | `disabledRules` | string[] | Walker names to disable (case-insensitive): `DeprecatedTag`, `RelativePath`, `BlockStructure`, `IncludeParameter`, `UnusedCapture`, `EmptyBlock`, `DeepNesting`, `DuplicateBlockName`, `UnusedAssign` |
-| `strictRules` | string[] | Opt-in rules to enable (off by default): `UnescapedVariable`, `SuperglobalAccess` |
+| `strictRules` | string[] | Opt-in rules to enable (off by default): `UnescapedVariable` |
 | `excludePatterns` | string[] | Glob patterns for files to skip |
 
 CLI flags take precedence over the config file.
@@ -436,21 +436,16 @@ The recognised escape modifier is `escape` (all `escape:*` type variants are cov
 
 ---
 
-### SuperglobalAccessWalker *(opt-in)*
+### SuperglobalAccessWalker *(default on)*
 
 Warns when a template reads HTTP input or server environment data directly via `$smarty.get.*`, `$smarty.post.*`, `$smarty.request.*`, `$smarty.cookies.*`, `$smarty.server.*`, `$smarty.env.*`, or `$smarty.session.*`.
 
 Templates should receive pre-processed, validated data from the controller. Direct superglobal access makes templates hard to test and bypasses input validation, which can introduce XSS or injection vulnerabilities.
 
-**Enable via CLI:**
-```bash
-php bin/smarty-lint --enable SuperglobalAccess --recursive templates/
-```
-
-**Enable via config file:**
+**Disable via config file** (if your codebase intentionally uses superglobals in templates):
 ```json
 {
-    "strictRules": ["SuperglobalAccess"]
+    "disabledRules": ["SuperglobalAccess"]
 }
 ```
 
@@ -619,12 +614,12 @@ Run it directly:
 php dist/smartylint.phar --help
 ```
 
-302 tests across seven test classes:
+301 tests across seven test classes:
 
 | File | Tests |
 |------|-------|
 | `tests/BinTest.php` | 49 |
-| `tests/BinExtendedTest.php` | 76 |
+| `tests/BinExtendedTest.php` | 75 |
 | `tests/BinWalkerTest.php` | 43 |
 | `tests/LinterTest.php` | 20 |
 | `tests/FindUnusedAnalysisTest.php` | 34 |
