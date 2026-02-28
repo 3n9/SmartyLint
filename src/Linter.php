@@ -6,6 +6,7 @@ namespace SmartyLint;
 
 use SmartyAst\Ast\Node;
 use SmartyAst\Parser\SmartyParser;
+use SmartyLint\Walker\ComplexExpressionWalker;
 use SmartyLint\Walker\BlockStructureWalker;
 use SmartyLint\Walker\DeepNestingWalker;
 use SmartyLint\Walker\DeprecatedTagWalker;
@@ -60,6 +61,7 @@ final class Linter
             'duplicateblockname' => $this->duplicateBlockNameWalker,
             'unusedassign'       => $this->unusedAssignWalker,
             'superglobalaccess'  => new SuperglobalAccessWalker(),
+            'complexexpression'  => new ComplexExpressionWalker($config->maxModifierChain, $config->maxConditionOperands),
         ];
 
         // Strict (opt-in) walkers — only added when explicitly enabled.

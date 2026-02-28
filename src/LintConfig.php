@@ -11,12 +11,14 @@ namespace SmartyLint;
 final class LintConfig
 {
     /**
-     * @param string|null    $templateRoot    Base directory for resolving template includes (Smarty template_dir).
-     * @param list<string>   $disabledRules   Walker short names to disable, e.g. ['DeprecatedTag', 'RelativePath', 'DuplicateBlockName'].
-     * @param list<string>   $excludePatterns Glob patterns for files to exclude from linting.
-     * @param int            $maxNestingDepth Maximum allowed block nesting depth (DeepNestingWalker threshold).
-     * @param int|null       $maxScanDepth    Maximum recursive directory scan depth; null means unlimited.
-     * @param list<string>   $strictRules     Extra rules that are off by default but can be opted in, e.g. ['UnescapedVariable'].
+     * @param string|null    $templateRoot         Base directory for resolving template includes (Smarty template_dir).
+     * @param list<string>   $disabledRules        Walker short names to disable, e.g. ['DeprecatedTag', 'RelativePath', 'DuplicateBlockName'].
+     * @param list<string>   $excludePatterns      Glob patterns for files to exclude from linting.
+     * @param int            $maxNestingDepth      Maximum allowed block nesting depth (DeepNestingWalker threshold).
+     * @param int|null       $maxScanDepth         Maximum recursive directory scan depth; null means unlimited.
+     * @param list<string>   $strictRules          Extra rules that are off by default but can be opted in, e.g. ['UnescapedVariable'].
+     * @param int            $maxModifierChain     Maximum allowed modifier chain length (ComplexExpressionWalker threshold).
+     * @param int            $maxConditionOperands Maximum allowed operands in a boolean condition (ComplexExpressionWalker threshold).
      */
     public function __construct(
         public readonly ?string $templateRoot = null,
@@ -25,6 +27,8 @@ final class LintConfig
         public readonly int $maxNestingDepth = 5,
         public readonly ?int $maxScanDepth = null,
         public readonly array $strictRules = [],
+        public readonly int $maxModifierChain = 3,
+        public readonly int $maxConditionOperands = 3,
     ) {
     }
 
@@ -74,7 +78,15 @@ final class LintConfig
             ? array_values(array_filter($data['strictRules'], 'is_string'))
             : [];
 
-        return new self($templateRoot, $disabledRules, $excludePatterns, $maxNestingDepth, $maxScanDepth, $strictRules);
+        $maxModifierChain = isset($data['maxModifierChain']) && is_int($data['maxModifierChain']) && $data['maxModifierChain'] > 0
+            ? $data['maxModifierChain']
+            : 3;
+
+        $maxConditionOperands = isset($data['maxConditionOperands']) && is_int($data['maxConditionOperands']) && $data['maxConditionOperands'] > 0
+            ? $data['maxConditionOperands']
+            : 3;
+
+        return new self($templateRoot, $disabledRules, $excludePatterns, $maxNestingDepth, $maxScanDepth, $strictRules, $maxModifierChain, $maxConditionOperands);
     }
 
     /**
@@ -97,6 +109,8 @@ final class LintConfig
             maxNestingDepth: $maxNestingDepth ?? $this->maxNestingDepth,
             maxScanDepth: $maxScanDepth ?? $this->maxScanDepth,
             strictRules: $strictRules !== [] ? array_values(array_unique(array_merge($this->strictRules, $strictRules))) : $this->strictRules,
+            maxModifierChain: $this->maxModifierChain,
+            maxConditionOperands: $this->maxConditionOperands,
         );
     }
 }
