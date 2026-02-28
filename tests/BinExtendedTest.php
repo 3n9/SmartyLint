@@ -1211,4 +1211,39 @@ final class BinExtendedTest extends LintTestCase
         $this->assertSame(1, $exitCode);
         $this->assertNotEmpty(array_filter($issues, static fn ($i) => str_contains($i['message'], 'escaping')));
     }
+
+    public function testConfigLoadedFromTemplateRootNotCwd(): void
+    {
+        // Create a "project" dir with a config that disables DeprecatedTag,
+        // and a separate "cwd" dir with no config.
+        $projectDir = sys_get_temp_dir() . '/smartylint_projroot_' . uniqid();
+        $cwdDir     = sys_get_temp_dir() . '/smartylint_cwd_' . uniqid();
+        mkdir($projectDir);
+        mkdir($cwdDir);
+
+        file_put_contents($projectDir . '/t.tpl', '{php}echo 1;{/php}');
+        // Config in the project root disables DeprecatedTag.
+        file_put_contents($projectDir . '/.smartylintrc.json', json_encode([
+            'disabledRules' => ['DeprecatedTag'],
+        ]));
+        // No config in cwd — without the fix, the linter would use $cwdDir
+        // and DeprecatedTag would fire.
+
+        $bin = realpath(__DIR__ . '/../bin/smarty-lint');
+        $cmd = 'php ' . escapeshellarg($bin)
+            . ' --json'
+            . ' --template-root ' . escapeshellarg($projectDir)
+            . ' ' . escapeshellarg($projectDir . '/t.tpl');
+
+        exec('cd ' . escapeshellarg($cwdDir) . ' && ' . $cmd, $outputLines, $exitCode);
+        $issues = json_decode(implode('', $outputLines), true) ?? [];
+
+        $this->removeTmpDir($projectDir);
+        $this->removeTmpDir($cwdDir);
+
+        // Config from --template-root must have been applied: no issues.
+        $this->assertSame(0, $exitCode);
+        $this->assertEmpty($issues);
+    }
 }
+

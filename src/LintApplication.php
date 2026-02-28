@@ -99,7 +99,12 @@ final class LintApplication
         // ----------------------------------------------------------------
         $cwd = getcwd();
         $cachePathBase = is_string($cwd) ? $cwd : __DIR__;
-        $configPath = $cachePathBase . '/.smartylintrc.json';
+        // If --template-root is given it defines the project root, so look for
+        // the config file there first; fall back to cwd.
+        $configBase = ($templateRoot !== null && is_dir($templateRoot))
+            ? realpath($templateRoot)
+            : $cachePathBase;
+        $configPath = ($configBase !== false ? $configBase : $cachePathBase) . '/.smartylintrc.json';
         $config = LintConfig::fromFile($configPath)->withOverrides(
             templateRoot: $templateRoot,
             excludePatterns: $excludePatterns,
