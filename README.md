@@ -4,6 +4,8 @@ A CLI linter for [Smarty](https://www.smarty.net/) templates, powered by [Smarty
 
 Parses each template into a typed AST and runs configurable walker-based rules. Supports project-wide analysis for unused code.
 
+![SmartyLint terminal output](.github/screenshots/terminal-output.png)
+
 ---
 
 ## Requirements
@@ -130,6 +132,8 @@ php bin/smarty-lint --find-unused --recursive templates/
 ## Editor Integration
 
 ### Neovim — nvim-lint (LazyVim)
+
+![Neovim with SmartyLint diagnostics](.github/screenshots/editor-neovim.png)
 
 Create `lua/plugins/lint.lua` in your Neovim config:
 
