@@ -284,7 +284,7 @@ final class TemplateGraph
     }
 
     // ------------------------------------------------------------------
-    // Helpers
+    // New public methods
     // ------------------------------------------------------------------
 
     /** @return array<string,true> */
@@ -297,5 +297,73 @@ final class TemplateGraph
             }
         }
         return $names;
+    }
+
+    /**
+     * Returns all template paths that transitively include or extend $path.
+     * Result is sorted for deterministic output. Does not include $path itself.
+     *
+     * @return list<string>
+     */
+    public function getDependents(string $path): array
+    {
+        // Build reverse adjacency map: target → list of sources that reference it.
+        /** @var array<string, list<string>> $reverse */
+        $reverse = [];
+
+        foreach ($this->includes as $source => $targets) {
+            foreach ($targets as $target) {
+                $reverse[$target['targetPath']][] = $source;
+            }
+        }
+
+        foreach ($this->extends as $child => $parent) {
+            $reverse[$parent][] = $child;
+        }
+
+        // BFS from $path through the reverse graph.
+        $visited = [];
+        $queue   = [$path];
+
+        while ($queue !== []) {
+            $current = array_shift($queue);
+            foreach ($reverse[$current] ?? [] as $dependent) {
+                if (!isset($visited[$dependent])) {
+                    $visited[$dependent] = true;
+                    $queue[] = $dependent;
+                }
+            }
+        }
+
+        $result = array_keys($visited);
+        sort($result);
+        return array_values($result);
+    }
+
+    /**
+     * Serializes the full graph as JSON for external consumers.
+     * Omits variablesUsed (too verbose).
+     */
+    public function toJson(int $flags = 0): string
+    {
+        $includesData = [];
+        foreach ($this->includes as $source => $targets) {
+            $includesData[$source] = array_map(static fn (array $t) => [
+                'targetPath' => $t['targetPath'],
+                'line'       => $t['line'],
+                'col'        => $t['col'],
+            ], $targets);
+        }
+
+        $data = [
+            'includes'            => $includesData,
+            'extends'             => $this->extends,
+            'blockDefinitions'    => $this->blockDefinitions,
+            'blockOverrides'      => $this->blockOverrides,
+            'functionDefinitions' => $this->functionDefinitions,
+            'functionCalls'       => $this->functionCalls,
+        ];
+
+        return json_encode($data, JSON_THROW_ON_ERROR | $flags);
     }
 }
