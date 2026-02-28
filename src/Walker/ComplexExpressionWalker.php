@@ -18,7 +18,7 @@ use SmartyLint\IssueCollector;
 /**
  * Reports expressions that are too complex to be readable in a template:
  * - Modifier chains exceeding the configured maximum length.
- * - Boolean conditions with too many operands in {if}/{elseif} tags.
+ * - Boolean expressions with too many operands in any tag argument or print expression.
  */
 final class ComplexExpressionWalker implements NodeWalker
 {
@@ -35,47 +35,24 @@ final class ComplexExpressionWalker implements NodeWalker
 
     public function onNode(Node $node, string $path, IssueCollector $issues): void
     {
-        // Check modifier chains inside print expressions ({$var|fn1|fn2}).
+        // Check modifier chains and complex expressions inside print expressions ({$var|fn1|fn2}).
         if ($node instanceof PrintNode) {
             $this->checkModifierChain($node->expression, $path, $issues);
+            $this->checkConditionOperands($node->expression, $path, $issues);
             return;
         }
 
-        // Check modifier chains inside tag arguments and condition complexity.
+        // Check modifier chains and complex expressions inside all tag arguments.
         if ($node instanceof TagLike) {
-            $tag = $node->resolveTag();
-            foreach ($tag->arguments as $arg) {
+            foreach ($node->resolveTag()->arguments as $arg) {
                 $this->checkModifierChain($arg->value, $path, $issues);
-            }
-
-            // Check condition operand count for {if} and {elseif}.
-            $name = strtolower($tag->name);
-            if (($name === 'if' || $name === 'elseif') && isset($tag->arguments[0])) {
-                $expr = $tag->arguments[0]->value;
-                $count = $this->countOperands($expr);
-                if ($count > $this->maxConditionOperands) {
-                    $issues->add(
-                        $path,
-                        $expr->span->start->line,
-                        $expr->span->start->column,
-                        'WARNING',
-                        "Condition has {$count} operands, exceeding maximum of {$this->maxConditionOperands}; consider extracting into an {assign} or controller variable.",
-                    );
-                }
+                $this->checkConditionOperands($arg->value, $path, $issues);
             }
         }
+
         // Check condition operand count for {elseif} (ElseBranchNode).
-        if ($node instanceof ElseBranchNode && strtolower($node->name) === 'elseif' && $node->condition !== null) {
-            $count = $this->countOperands($node->condition);
-            if ($count > $this->maxConditionOperands) {
-                $issues->add(
-                    $path,
-                    $node->condition->span->start->line,
-                    $node->condition->span->start->column,
-                    'WARNING',
-                    "Condition has {$count} operands, exceeding maximum of {$this->maxConditionOperands}; consider extracting into an {assign} or controller variable.",
-                );
-            }
+        if ($node instanceof ElseBranchNode && $node->condition !== null) {
+            $this->checkConditionOperands($node->condition, $path, $issues);
         }
     }
 
@@ -92,6 +69,23 @@ final class ComplexExpressionWalker implements NodeWalker
                 $expr->span->start->column,
                 'WARNING',
                 "Modifier chain length {$count} exceeds maximum of {$this->maxModifierChain}; consider simplifying or moving logic to the controller.",
+            );
+        }
+    }
+
+    private function checkConditionOperands(ExpressionNode $expr, string $path, IssueCollector $issues): void
+    {
+        if (!($expr instanceof BinaryExpressionNode) && !($expr instanceof UnaryExpressionNode)) {
+            return;
+        }
+        $count = $this->countOperands($expr);
+        if ($count > $this->maxConditionOperands) {
+            $issues->add(
+                $path,
+                $expr->span->start->line,
+                $expr->span->start->column,
+                'WARNING',
+                "Condition has {$count} operands, exceeding maximum of {$this->maxConditionOperands}; consider extracting into an {assign} or controller variable.",
             );
         }
     }

@@ -93,7 +93,7 @@ final class ComplexExpressionWalkerTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
-    // Boolean condition operands
+    // Boolean condition operands — {if}/{elseif}
     // -------------------------------------------------------------------------
 
     public function testConditionAtThresholdProducesNoIssue(): void
@@ -158,6 +158,34 @@ final class ComplexExpressionWalkerTest extends TestCase
         // 6 operands with threshold 5 → warning
         $result2 = $this->issues('{if $a && $b || $c && $d || $e && $f}{/if}', $walker);
         $this->assertCount(1, $result2);
+    }
+
+    // -------------------------------------------------------------------------
+    // Boolean condition operands — other tags ({include}, {assign}, etc.)
+    // -------------------------------------------------------------------------
+
+    public function testComplexExpressionInIncludeArgumentWarns(): void
+    {
+        $walker = new ComplexExpressionWalker(3, 3);
+        // 4 operands in a custom argument of {include}
+        $result = $this->issues('{include file="x.tpl" show=$a && $b || $c && $d}', $walker);
+        $this->assertCount(1, $result);
+        $this->assertStringContainsString('Condition has 4 operands', $result[0]->message);
+    }
+
+    public function testComplexExpressionInAssignValueWarns(): void
+    {
+        $walker = new ComplexExpressionWalker(3, 3);
+        $result = $this->issues('{assign var="x" value=$a && $b || $c && $d}', $walker);
+        $this->assertCount(1, $result);
+        $this->assertStringContainsString('Condition has 4 operands', $result[0]->message);
+    }
+
+    public function testSimpleExpressionInAssignProducesNoIssue(): void
+    {
+        $walker = new ComplexExpressionWalker(3, 3);
+        $result = $this->issues('{assign var="x" value=$a && $b}', $walker);
+        $this->assertCount(0, $result);
     }
 
     // -------------------------------------------------------------------------
