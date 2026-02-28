@@ -182,6 +182,48 @@ vim.filetype.add({ extension = { tpl = "smarty" } })
 
 ---
 
+### Visual Studio Code — diagnostic-languageserver
+
+Install the [diagnostic-languageserver](https://marketplace.visualstudio.com/items?itemName=lgbtm.diagnostic-language-server) extension, then add this to your workspace or user `settings.json`:
+
+```json
+{
+    "diagnostic-languageserver.linters": {
+        "smartylint": {
+            "command": "smartylint",
+            "args": ["--json", "%filepath"],
+            "sourceName": "SmartyLint",
+            "parseJson": {
+                "errorsRoot": "",
+                "line": "line",
+                "column": "col",
+                "message": "${message}",
+                "security": "severity"
+            },
+            "securities": {
+                "ERROR": "error",
+                "WARNING": "warning"
+            }
+        }
+    },
+    "diagnostic-languageserver.filetypes": {
+        "smarty": "smartylint"
+    }
+}
+```
+
+VS Code doesn't recognise `.tpl` as Smarty by default. Install the [Smarty Template Support](https://marketplace.visualstudio.com/items?itemName=aswinkumar863.smarty-template-support) extension, or add a manual association:
+
+```json
+{
+    "files.associations": {
+        "*.tpl": "smarty"
+    }
+}
+```
+
+---
+
 ## Output Formats
 
 **Text (default):**
