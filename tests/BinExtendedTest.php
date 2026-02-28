@@ -971,19 +971,24 @@ final class BinExtendedTest extends LintTestCase
         $this->assertStringContainsString('No files to lint', $stderr);
     }
 
-    public function testCacheFileNotCreatedInTempDir(): void
+    public function testCacheWrittenToSysTempDir(): void
     {
-        // When linting a file in /tmp, the cache should be created relative
-        // to wherever the bin runs (fixturesDir), not the template dir
+        // Cache must be stored in sys_get_temp_dir(), not next to the template
+        // or in the project directory.
         $path = $this->writeTmp('<p>{$x}</p>');
 
         $this->runBin([$path]);
 
-        // Cache should NOT exist next to the temp file
         $this->assertFileDoesNotExist(
             dirname($path) . '/.smartylint-cache.json',
             'Cache must not be written next to template file',
         );
+
+        // The cache file is named after the cwd used when running the bin.
+        // BinTest helpers run the bin from tests/Fixtures/, so we check that dir.
+        $fixturesDir = realpath(__DIR__ . '/Fixtures');
+        $expectedCache = sys_get_temp_dir() . '/smartylint-' . md5($fixturesDir) . '.json';
+        $this->assertFileExists($expectedCache, 'Cache must be written to sys_get_temp_dir()');
     }
 
     // ------------------------------------------------------------------

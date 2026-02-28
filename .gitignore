@@ -1,6 +1,6 @@
 /vendor/
 /dist/
 /.phpunit.result.cache
-/.smartylint-cache.json
+# Legacy: cache was previously written to cwd; ignore in case of older installs
 /.smartylint-cache.json
 tests/Fixtures/.smartylint-cache.json

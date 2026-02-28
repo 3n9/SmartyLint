@@ -151,7 +151,8 @@ final class LintApplication
         // Run linting
         // ----------------------------------------------------------------
         $configFingerprint = $this->configFingerprint($config);
-        $cache = new LintCache($cachePathBase . '/.smartylint-cache.json', $configFingerprint);
+        $cacheFile = sys_get_temp_dir() . '/smartylint-' . md5($cachePathBase) . '.json';
+        $cache = new LintCache($cacheFile, $configFingerprint);
         $engine = new LintEngine(null, null, $cache, $config);
         $issues = $engine->lintFiles($filesToLint, $findUnused);
         $engine->saveCache();
