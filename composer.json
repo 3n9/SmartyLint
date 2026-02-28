@@ -4,7 +4,7 @@
     "type": "project",
     "require": {
         "php": "^8.4",
-        "3n9/smarty-ast": "dev-main"
+        "3n9/smarty-ast": "^1.0"
     },
     "autoload": {
         "psr-4": {
@@ -26,8 +26,6 @@
             "url": "https://github.com/3n9/SmartyAST.git"
         }
     ],
-    "minimum-stability": "dev",
-    "prefer-stable": true,
     "bin": [
         "bin/smarty-lint"
     ],

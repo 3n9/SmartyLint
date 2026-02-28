@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "34bb6cd24221c4461b1768cf58ecda2f",
+    "content-hash": "469d8b0537b7e80eb4a0ba5d8dfc78ee",
     "packages": [
         {
             "name": "3n9/smarty-ast",
-            "version": "dev-main",
+            "version": "v1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/3n9/SmartyAST.git",
-                "reference": "4638c0c56cfcd71096287c3d819dc808115bd65f"
+                "reference": "406a5acda2db710f8d9520485d976ed472bd06da"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/3n9/SmartyAST/zipball/4638c0c56cfcd71096287c3d819dc808115bd65f",
-                "reference": "4638c0c56cfcd71096287c3d819dc808115bd65f",
+                "url": "https://api.github.com/repos/3n9/SmartyAST/zipball/406a5acda2db710f8d9520485d976ed472bd06da",
+                "reference": "406a5acda2db710f8d9520485d976ed472bd06da",
                 "shasum": ""
             },
             "require": {
@@ -26,7 +26,6 @@
             "require-dev": {
                 "phpunit/phpunit": "^13"
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -48,10 +47,10 @@
             ],
             "description": "Smarty template AST parser with diagnostics and position tracking",
             "support": {
-                "source": "https://github.com/3n9/SmartyAST/tree/main",
+                "source": "https://github.com/3n9/SmartyAST/tree/v1.0.0",
                 "issues": "https://github.com/3n9/SmartyAST/issues"
             },
-            "time": "2026-02-27T08:10:21+00:00"
+            "time": "2026-02-28T07:58:41+00:00"
         }
     ],
     "packages-dev": [
@@ -1852,11 +1851,9 @@
         }
     ],
     "aliases": [],
-    "minimum-stability": "dev",
-    "stability-flags": {
-        "3n9/smarty-ast": 20
-    },
-    "prefer-stable": true,
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.4"
