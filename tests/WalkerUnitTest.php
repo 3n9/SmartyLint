@@ -656,6 +656,29 @@ final class WalkerUnitTest extends TestCase
         $this->assertCount(0, $issues2->all());
     }
 
+    public function testPositionalBlockShorthandIsCounted(): void
+    {
+        // {block 'name'} is shorthand for {block name='name'} and must be tracked.
+        $walker = new DuplicateBlockNameWalker();
+        $ast = $this->parse("{block 'header'}A{/block}{block 'header'}B{/block}");
+        $issues = new IssueCollector();
+        $this->walkTree($ast, $walker, $issues);
+        $walker->finalize($this->path, $issues);
+        $this->assertCount(1, $issues->all());
+        $this->assertStringContainsString('header', $issues->all()[0]->message);
+    }
+
+    public function testMixedBlockSyntaxDuplicateIsDetected(): void
+    {
+        // {block 'name'} and {block name="name"} refer to the same block.
+        $walker = new DuplicateBlockNameWalker();
+        $ast = $this->parse("{block 'header'}A{/block}{block name=\"header\"}B{/block}");
+        $issues = new IssueCollector();
+        $this->walkTree($ast, $walker, $issues);
+        $walker->finalize($this->path, $issues);
+        $this->assertCount(1, $issues->all());
+    }
+
     // -------------------------------------------------------------------------
     // UnusedAssignWalker
     // -------------------------------------------------------------------------

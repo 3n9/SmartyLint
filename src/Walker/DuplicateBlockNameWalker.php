@@ -39,7 +39,14 @@ final class DuplicateBlockNameWalker implements NodeWalker
 
         $nameArg = null;
         foreach ($openTag->arguments as $argument) {
+            // Named: {block name="content"}
             if ($argument->name !== null && strtolower($argument->name) === 'name') {
+                $nameArg = $argument;
+                break;
+            }
+
+            // Positional shorthand: {block 'content'}
+            if ($argument->name === null && $openTag->isShorthand) {
                 $nameArg = $argument;
                 break;
             }
