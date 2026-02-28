@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "3n9/smarty-ast",
-            "version": "v1.0.0",
+            "version": "v1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/3n9/SmartyAST.git",
-                "reference": "406a5acda2db710f8d9520485d976ed472bd06da"
+                "reference": "28b871f8960d249f049cb14b47acb382907fde2a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/3n9/SmartyAST/zipball/406a5acda2db710f8d9520485d976ed472bd06da",
-                "reference": "406a5acda2db710f8d9520485d976ed472bd06da",
+                "url": "https://api.github.com/repos/3n9/SmartyAST/zipball/28b871f8960d249f049cb14b47acb382907fde2a",
+                "reference": "28b871f8960d249f049cb14b47acb382907fde2a",
                 "shasum": ""
             },
             "require": {
@@ -47,10 +47,10 @@
             ],
             "description": "Smarty template AST parser with diagnostics and position tracking",
             "support": {
-                "source": "https://github.com/3n9/SmartyAST/tree/v1.0.0",
+                "source": "https://github.com/3n9/SmartyAST/tree/v1.1.0",
                 "issues": "https://github.com/3n9/SmartyAST/issues"
             },
-            "time": "2026-02-28T07:58:41+00:00"
+            "time": "2026-02-28T15:29:42+00:00"
         }
     ],
     "packages-dev": [

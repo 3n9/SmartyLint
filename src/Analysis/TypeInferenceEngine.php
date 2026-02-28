@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SmartyLint\Analysis;
 
+use SmartyAst\Ast\AnnotationNode;
 use SmartyAst\Ast\ArrayExpressionNode;
 use SmartyAst\Ast\CommentNode;
 use SmartyAst\Ast\ExpressionNode;
@@ -48,7 +49,7 @@ final class TypeInferenceEngine
     {
         // Parse @param annotations from the first comment node encountered.
         if ($isFirst && $node instanceof CommentNode) {
-            $this->parseParamAnnotations($node->text, $types);
+            $this->processCommentAnnotations($node, $types);
             $isFirst = false;
         }
 
@@ -105,15 +106,17 @@ final class TypeInferenceEngine
     }
 
     /** @param array<string, string> &$types */
-    private function parseParamAnnotations(string $text, array &$types): void
+    private function processCommentAnnotations(CommentNode $comment, array &$types): void
     {
-        // Match @param <type> $<name> patterns anywhere in the comment text.
-        preg_match_all('/@param\s+(\S+)\s+\$([A-Za-z_][A-Za-z0-9_]*)/', $text, $matches, PREG_SET_ORDER);
-
-        foreach ($matches as $match) {
-            $rawType  = strtolower($match[1]);
-            $varName  = $match[2];
-            $types[$varName] = $this->normalizeType($rawType);
+        foreach ($comment->annotations as $annotation) {
+            if ($annotation->name !== 'param') {
+                continue;
+            }
+            $rawType = strtolower((string) ($annotation->data['type'] ?? ''));
+            $varName = (string) ($annotation->data['name'] ?? '');
+            if ($varName !== '' && $rawType !== '') {
+                $types[$varName] = $this->normalizeType($rawType);
+            }
         }
     }
 

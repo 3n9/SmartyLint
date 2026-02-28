@@ -131,7 +131,7 @@ final class TypeInferenceEngineTest extends TestCase
 
     public function testMultipleParamAnnotationsInSingleComment(): void
     {
-        $types = $this->infer('{* @param string $name @param int $age *}');
+        $types = $this->infer("{* @param string \$name\n * @param int \$age *}");
         $this->assertSame('string', $types['name']);
         $this->assertSame('int', $types['age']);
     }

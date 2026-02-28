@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SmartyLint\Walker;
 
 use SmartyAst\Ast\BinaryExpressionNode;
-use SmartyAst\Ast\BlockTagNode;
 use SmartyAst\Ast\ElseBranchNode;
 use SmartyAst\Ast\ExpressionNode;
 use SmartyAst\Ast\ModifierChainExpressionNode;
@@ -78,7 +77,7 @@ final class ComplexExpressionWalker implements NodeWalker
         if (!($expr instanceof BinaryExpressionNode) && !($expr instanceof UnaryExpressionNode)) {
             return;
         }
-        $count = $this->countOperands($expr);
+        $count = $expr->countBinaryOperands();
         if ($count > $this->maxConditionOperands) {
             $issues->add(
                 $path,
@@ -88,17 +87,5 @@ final class ComplexExpressionWalker implements NodeWalker
                 "Condition has {$count} operands, exceeding maximum of {$this->maxConditionOperands}; consider extracting into an {assign} or controller variable.",
             );
         }
-    }
-
-    private function countOperands(ExpressionNode $expr): int
-    {
-        if ($expr instanceof BinaryExpressionNode) {
-            return $this->countOperands($expr->left) + $this->countOperands($expr->right);
-        }
-        // Unwrap grouping parentheses — UnaryExpressionNode wraps a sub-expression.
-        if ($expr instanceof UnaryExpressionNode) {
-            return $this->countOperands($expr->expression);
-        }
-        return 1;
     }
 }
