@@ -17,6 +17,7 @@ use SmartyLint\Walker\NodeWalker;
 use SmartyLint\Walker\RelativePathWalker;
 use SmartyLint\Walker\UnusedAssignWalker;
 use SmartyLint\Walker\UnusedCaptureWalker;
+use SmartyLint\Walker\SuperglobalAccessWalker;
 use SmartyLint\Walker\UnescapedVariableWalker;
 
 final class Linter
@@ -62,7 +63,8 @@ final class Linter
 
         // Strict (opt-in) walkers — only added when explicitly enabled.
         $strictWalkers = [
-            'unescapedvariable' => new UnescapedVariableWalker(),
+            'unescapedvariable'  => new UnescapedVariableWalker(),
+            'superglobalaccess'  => new SuperglobalAccessWalker(),
         ];
 
         $this->walkers = [];

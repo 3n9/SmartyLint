@@ -244,7 +244,7 @@ Create `.smartylintrc.json` in the directory where you run `smarty-lint` (usuall
 | `maxNestingDepth` | int | Maximum block nesting depth before `DeepNestingWalker` warns (default `5`) |
 | `maxScanDepth` | int | Maximum depth for recursive directory scans (`0` = root directory only, omitted = unlimited) |
 | `disabledRules` | string[] | Walker names to disable (case-insensitive): `DeprecatedTag`, `RelativePath`, `BlockStructure`, `IncludeParameter`, `UnusedCapture`, `EmptyBlock`, `DeepNesting`, `DuplicateBlockName`, `UnusedAssign` |
-| `strictRules` | string[] | Opt-in rules to enable (off by default): `UnescapedVariable` |
+| `strictRules` | string[] | Opt-in rules to enable (off by default): `UnescapedVariable`, `SuperglobalAccess` |
 | `excludePatterns` | string[] | Glob patterns for files to skip |
 
 CLI flags take precedence over the config file.
@@ -436,6 +436,40 @@ The recognised escape modifier is `escape` (all `escape:*` type variants are cov
 
 ---
 
+### SuperglobalAccessWalker *(opt-in)*
+
+Warns when a template reads HTTP input or server environment data directly via `$smarty.get.*`, `$smarty.post.*`, `$smarty.request.*`, `$smarty.cookies.*`, `$smarty.server.*`, `$smarty.env.*`, or `$smarty.session.*`.
+
+Templates should receive pre-processed, validated data from the controller. Direct superglobal access makes templates hard to test and bypasses input validation, which can introduce XSS or injection vulnerabilities.
+
+**Enable via CLI:**
+```bash
+php bin/smarty-lint --enable SuperglobalAccess --recursive templates/
+```
+
+**Enable via config file:**
+```json
+{
+    "strictRules": ["SuperglobalAccess"]
+}
+```
+
+```smarty
+{* WARNING: direct superglobal access *}
+{$smarty.get.q}
+{$smarty.post.name}
+{if $smarty.session.user}...{/if}
+{include file="partial.tpl" title=$smarty.request.title}
+
+{* OK — variable assigned by controller *}
+{$search_query}
+{$current_user}
+```
+
+The rule fires on any use of the value — print, condition, tag argument — not only unescaped output.
+
+---
+
 ## `--find-unused` Analysis
 
 Enables project-wide analysis for dead code. Best used with `--recursive` to give the analyzer full project context.
@@ -585,16 +619,16 @@ Run it directly:
 php dist/smartylint.phar --help
 ```
 
-293 tests across seven test classes:
+302 tests across seven test classes:
 
 | File | Tests |
 |------|-------|
 | `tests/BinTest.php` | 49 |
-| `tests/BinExtendedTest.php` | 73 |
+| `tests/BinExtendedTest.php` | 76 |
 | `tests/BinWalkerTest.php` | 43 |
 | `tests/LinterTest.php` | 20 |
 | `tests/FindUnusedAnalysisTest.php` | 34 |
-| `tests/WalkerUnitTest.php` | 71 |
+| `tests/WalkerUnitTest.php` | 77 |
 | `tests/LintEngineTest.php` | 3 |
 
 ---

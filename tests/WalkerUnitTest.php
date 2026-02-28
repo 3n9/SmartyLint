@@ -19,6 +19,7 @@ use SmartyLint\Walker\RelativePathWalker;
 use SmartyLint\Walker\UnusedAssignWalker;
 use SmartyLint\Walker\UnusedCaptureWalker;
 use SmartyLint\Walker\UnescapedVariableWalker;
+use SmartyLint\Walker\SuperglobalAccessWalker;
 
 /**
  * Direct unit tests for each walker class.
@@ -808,5 +809,58 @@ final class WalkerUnitTest extends TestCase
     {
         $walker = new UnescapedVariableWalker();
         $this->assertCount(0, $this->issues('<p>Hello world</p>', $walker));
+    }
+
+    // -------------------------------------------------------------------------
+    // SuperglobalAccessWalker
+    // -------------------------------------------------------------------------
+
+    public function testGetAccessWarns(): void
+    {
+        $walker = new SuperglobalAccessWalker();
+        $issues = $this->issues('{$smarty.get.q}', $walker);
+        $this->assertCount(1, $issues);
+        $this->assertSame('WARNING', $issues[0]->severity);
+        $this->assertStringContainsString('smarty.get', $issues[0]->message);
+    }
+
+    public function testPostAccessWarns(): void
+    {
+        $walker = new SuperglobalAccessWalker();
+        $issues = $this->issues('{$smarty.post.name}', $walker);
+        $this->assertCount(1, $issues);
+        $this->assertStringContainsString('smarty.post', $issues[0]->message);
+    }
+
+    public function testAllSuperglobalsWarn(): void
+    {
+        $walker = new SuperglobalAccessWalker();
+        foreach (['get', 'post', 'request', 'cookies', 'server', 'env', 'session'] as $key) {
+            $issues = $this->issues("{\$smarty.{$key}.x}", $walker);
+            $this->assertNotEmpty($issues, "Expected warning for smarty.{$key}");
+        }
+    }
+
+    public function testSuperglobalInTagArgumentWarns(): void
+    {
+        // Dangerous even when not printed — e.g. {include file=$smarty.get.tpl}
+        $walker = new SuperglobalAccessWalker();
+        $issues = $this->issues('{include file=$smarty.get.tpl}', $walker);
+        $this->assertCount(1, $issues);
+    }
+
+    public function testSuperglobalInConditionWarns(): void
+    {
+        $walker = new SuperglobalAccessWalker();
+        $issues = $this->issues('{if $smarty.get.debug}ok{/if}', $walker);
+        $this->assertCount(1, $issues);
+    }
+
+    public function testNormalVariableDoesNotWarn(): void
+    {
+        $walker = new SuperglobalAccessWalker();
+        $this->assertCount(0, $this->issues('{$user}', $walker));
+        $this->assertCount(0, $this->issues('{$smarty.capture.foo}', $walker));
+        $this->assertCount(0, $this->issues('{$smarty.now}', $walker));
     }
 }

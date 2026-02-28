@@ -1212,8 +1212,7 @@ final class BinExtendedTest extends LintTestCase
         $this->assertNotEmpty(array_filter($issues, static fn ($i) => str_contains($i['message'], 'escaping')));
     }
 
-    public function testConfigLoadedFromTemplateRootNotCwd(): void
-    {
+    public function testConfigLoadedFromTemplateRootNotCwd(): void    {
         // Create a "project" dir with a config that disables DeprecatedTag,
         // and a separate "cwd" dir with no config.
         $projectDir = sys_get_temp_dir() . '/smartylint_projroot_' . uniqid();
@@ -1244,6 +1243,56 @@ final class BinExtendedTest extends LintTestCase
         // Config from --template-root must have been applied: no issues.
         $this->assertSame(0, $exitCode);
         $this->assertEmpty($issues);
+    }
+
+    // ------------------------------------------------------------------
+    // SuperglobalAccess — opt-in strict rule
+    // ------------------------------------------------------------------
+
+    public function testSuperglobalAccessNotFiredByDefault(): void
+    {
+        $tpl = realpath(__DIR__ . '/Fixtures/errors/superglobal_access.tpl');
+        $bin = realpath(__DIR__ . '/../bin/smarty-lint');
+        exec('php ' . escapeshellarg($bin) . ' --json ' . escapeshellarg($tpl), $out, $exitCode);
+        $issues = json_decode(implode('', $out), true) ?? [];
+        $this->assertEmpty(array_filter($issues, static fn ($i) => str_contains($i['message'], 'smarty.get')));
+    }
+
+    public function testSuperglobalAccessEnabledViaConfigFile(): void
+    {
+        $tmpDir = sys_get_temp_dir() . '/smartylint_sg_' . uniqid();
+        mkdir($tmpDir);
+        file_put_contents($tmpDir . '/t.tpl', "{p}{\$smarty.get.q}{/p}");
+        file_put_contents($tmpDir . '/.smartylintrc.json', json_encode([
+            'strictRules' => ['SuperglobalAccess'],
+        ]));
+
+        $bin = realpath(__DIR__ . '/../bin/smarty-lint');
+        $cmd = 'php ' . escapeshellarg($bin) . ' --json ' . escapeshellarg($tmpDir . '/t.tpl');
+        exec('cd ' . escapeshellarg($tmpDir) . ' && ' . $cmd, $out, $exitCode);
+        $issues = json_decode(implode('', $out), true) ?? [];
+
+        $this->removeTmpDir($tmpDir);
+
+        $this->assertSame(1, $exitCode);
+        $this->assertNotEmpty(array_filter($issues, static fn ($i) => str_contains($i['message'], 'smarty.get')));
+    }
+
+    public function testSuperglobalAccessEnabledViaCli(): void
+    {
+        $tmpDir = sys_get_temp_dir() . '/smartylint_sgcli_' . uniqid();
+        mkdir($tmpDir);
+        file_put_contents($tmpDir . '/t.tpl', "{p}{\$smarty.post.name}{/p}");
+
+        $bin = realpath(__DIR__ . '/../bin/smarty-lint');
+        $cmd = 'php ' . escapeshellarg($bin) . ' --json --enable SuperglobalAccess ' . escapeshellarg($tmpDir . '/t.tpl');
+        exec('cd ' . escapeshellarg($tmpDir) . ' && ' . $cmd, $out, $exitCode);
+        $issues = json_decode(implode('', $out), true) ?? [];
+
+        $this->removeTmpDir($tmpDir);
+
+        $this->assertSame(1, $exitCode);
+        $this->assertNotEmpty(array_filter($issues, static fn ($i) => str_contains($i['message'], 'smarty.post')));
     }
 }
 
