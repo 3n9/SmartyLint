@@ -9,18 +9,43 @@ Parses each template into a typed AST and runs configurable walker-based rules. 
 ## Requirements
 
 - PHP 8.4+
-- Composer
+- Composer *(only required for source / Composer installs)*
 
 ---
 
 ## Installation
 
-### Directly
+### PHAR *(recommended)*
+
+Download the latest pre-built binary from [GitHub Releases](https://github.com/3n9/SmartyLint/releases/latest):
 
 ```bash
-git clone .../SmartyLint
+curl -L https://github.com/3n9/SmartyLint/releases/latest/download/smartylint.phar \
+     -o smartylint.phar
+chmod +x smartylint.phar
+sudo mv smartylint.phar /usr/local/bin/smartylint
+```
+
+Verify the install:
+
+```bash
+smartylint --version
+```
+
+### Via Composer
+
+```bash
+composer require 3n9/smarty-lint
+vendor/bin/smarty-lint --version
+```
+
+### From source
+
+```bash
+git clone https://github.com/3n9/SmartyLint.git
 cd SmartyLint
 composer install
+php bin/smarty-lint --version
 ```
 
 ---
@@ -98,6 +123,61 @@ php bin/smarty-lint --template-root /var/www/app/templates --recursive templates
 Project-wide unused code analysis:
 ```bash
 php bin/smarty-lint --find-unused --recursive templates/
+```
+
+---
+
+## Editor Integration
+
+### Neovim — nvim-lint (LazyVim)
+
+Create `lua/plugins/lint.lua` in your Neovim config:
+
+```lua
+return {
+  {
+    "mfussenegger/nvim-lint",
+    opts = function(_, opts)
+      -- Register the smartylint linter
+      local lint = require("lint")
+      lint.linters.smartylint = {
+        name = "smartylint",
+        cmd = "smartylint",
+        args = { "--json" },
+        stdin = false,
+        append_fname = true,
+        stream = "stdout",
+        ignore_exitcode = true,
+        parser = function(output)
+          local issues = vim.json.decode(output) or {}
+          local diagnostics = {}
+          for _, issue in ipairs(issues) do
+            table.insert(diagnostics, {
+              lnum     = issue.line - 1,
+              col      = issue.col - 1,
+              message  = issue.message,
+              severity = issue.severity == "ERROR"
+                and vim.diagnostic.severity.ERROR
+                or  vim.diagnostic.severity.WARN,
+              source   = "smartylint",
+            })
+          end
+          return diagnostics
+        end,
+      }
+
+      -- Attach to Smarty files
+      opts.linters_by_ft = opts.linters_by_ft or {}
+      opts.linters_by_ft.smarty = { "smartylint" }
+    end,
+  },
+}
+```
+
+Neovim doesn't have a built-in `smarty` filetype. Add this to detect `.tpl` files:
+
+```lua
+vim.filetype.add({ extension = { tpl = "smarty" } })
 ```
 
 ---
@@ -399,11 +479,12 @@ Shorthand invocations (`{render_badge label="x"}`) are detected in addition to e
 
 ## Caching
 
-SmartyLint caches parse results in `.smartylint-cache.json` in the current working directory. Cached results are invalidated automatically when a file's content changes. Add this file to `.gitignore`:
+SmartyLint caches parse results in `sys_get_temp_dir()` (e.g. `/tmp/smartylint-<hash>.json`), keyed by the directory where `smartylint` is run. Cached results are invalidated automatically when:
 
-```
-/.smartylint-cache.json
-```
+- A file's content changes
+- The active configuration (disabled rules, strict rules, etc.) changes
+
+No cache files are written into your project directory, so no `.gitignore` entry is needed.
 
 ---
 
@@ -504,16 +585,17 @@ Run it directly:
 php dist/smartylint.phar --help
 ```
 
-256 tests across six test classes:
+293 tests across seven test classes:
 
-| File | Tests | Coverage |
-|------|-------|----------|
-| `tests/BinTest.php` | 40 | Core CLI end-to-end, new flags |
-| `tests/BinExtendedTest.php` | 69 | Huge templates, flag edge cases, new features |
-| `tests/BinWalkerTest.php` | 43 | Walker rules, cache, 1000-line templates |
-| `tests/LinterTest.php` | 19 | Linter class integration |
-| `tests/FindUnusedAnalysisTest.php` | 34 | `--find-unused` unit tests |
-| `tests/WalkerUnitTest.php` | 48 | Direct walker unit tests incl. new walkers |
+| File | Tests |
+|------|-------|
+| `tests/BinTest.php` | 49 |
+| `tests/BinExtendedTest.php` | 73 |
+| `tests/BinWalkerTest.php` | 43 |
+| `tests/LinterTest.php` | 20 |
+| `tests/FindUnusedAnalysisTest.php` | 34 |
+| `tests/WalkerUnitTest.php` | 71 |
+| `tests/LintEngineTest.php` | 3 |
 
 ---
 
