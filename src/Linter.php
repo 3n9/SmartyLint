@@ -6,6 +6,7 @@ namespace SmartyLint;
 
 use SmartyAst\Ast\Node;
 use SmartyAst\Parser\SmartyParser;
+use SmartyLint\Analysis\TypeInferenceEngine;
 use SmartyLint\Walker\ComplexExpressionWalker;
 use SmartyLint\Walker\BlockStructureWalker;
 use SmartyLint\Walker\DeepNestingWalker;
@@ -15,6 +16,7 @@ use SmartyLint\Walker\EmptyBlockWalker;
 use SmartyLint\Walker\ExitAwareNodeWalker;
 use SmartyLint\Walker\IncludeParameterWalker;
 use SmartyLint\Walker\NodeWalker;
+use SmartyLint\Walker\ModifierTypeMismatchWalker;
 use SmartyLint\Walker\RelativePathWalker;
 use SmartyLint\Walker\UnusedAssignWalker;
 use SmartyLint\Walker\UnusedCaptureWalker;
@@ -31,6 +33,8 @@ final class Linter
     private DuplicateBlockNameWalker $duplicateBlockNameWalker;
     private UnusedAssignWalker $unusedAssignWalker;
     private IncludeCycleDetector $includeCycleDetector;
+    private TypeInferenceEngine $typeInferenceEngine;
+    private bool $modifierTypeMismatchEnabled;
     /** @var list<NodeWalker> */
     private array $walkers;
 
@@ -46,9 +50,14 @@ final class Linter
         $this->duplicateBlockNameWalker = new DuplicateBlockNameWalker();
         $this->unusedAssignWalker = new UnusedAssignWalker();
         $this->includeCycleDetector = new IncludeCycleDetector($includeParser);
+        $this->typeInferenceEngine = new TypeInferenceEngine();
 
         $disabled = array_map('strtolower', $config->disabledRules);
         $strict   = array_map('strtolower', $config->strictRules);
+
+        // ModifierTypeMismatchWalker is per-file (needs a fresh type map each time).
+        // Track whether it's enabled so lintFile() can instantiate it when needed.
+        $this->modifierTypeMismatchEnabled = !in_array('modifiertypemismatch', $disabled, true);
 
         $allWalkers = [
             'blockstructure'     => new BlockStructureWalker(),
@@ -116,7 +125,15 @@ final class Linter
             $this->duplicateBlockNameWalker->reset();
             $this->unusedAssignWalker->reset();
             $this->includeCycleDetector->detect($normalizedPath, $result, $collector);
-            $this->walkNode($result->ast, $normalizedPath, $collector);
+
+            // Build per-file walker list: reusable walkers + per-file ModifierTypeMismatchWalker.
+            $perFileWalkers = $this->walkers;
+            if ($this->modifierTypeMismatchEnabled) {
+                $typeMap = $this->typeInferenceEngine->infer($result);
+                $perFileWalkers[] = new ModifierTypeMismatchWalker($typeMap);
+            }
+
+            $this->walkNode($result->ast, $normalizedPath, $collector, $perFileWalkers);
             $this->unusedCaptureWalker->finalize($normalizedPath, $collector);
             $this->duplicateBlockNameWalker->finalize($normalizedPath, $collector);
             $this->unusedAssignWalker->finalize($normalizedPath, $collector);
@@ -141,17 +158,18 @@ final class Linter
         return $issues;
     }
 
-    private function walkNode(Node $node, string $path, IssueCollector $collector): void
+    /** @param list<NodeWalker> $walkers */
+    private function walkNode(Node $node, string $path, IssueCollector $collector, array $walkers): void
     {
-        foreach ($this->walkers as $walker) {
+        foreach ($walkers as $walker) {
             $walker->onNode($node, $path, $collector);
         }
 
         foreach ($node->children() as $child) {
-            $this->walkNode($child, $path, $collector);
+            $this->walkNode($child, $path, $collector, $walkers);
         }
 
-        foreach ($this->walkers as $walker) {
+        foreach ($walkers as $walker) {
             if ($walker instanceof ExitAwareNodeWalker) {
                 $walker->onExit($node, $path, $collector);
             }
