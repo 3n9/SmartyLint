@@ -424,6 +424,54 @@ final class WalkerUnitTest extends TestCase
         $this->assertCount(0, $issues->all());
     }
 
+    public function testAppendCaptureUsedViaSmartyCaptureIsNotFlagged(): void
+    {
+        // {capture append="list"} is read via {$smarty.capture.list} — must not warn.
+        $walker = new UnusedCaptureWalker();
+        $walker->reset();
+        $ast = $this->parse('{capture append="list"}item{/capture}{$smarty.capture.list}');
+        $issues = new IssueCollector();
+        $this->walkTree($ast, $walker, $issues);
+        $walker->finalize($this->path, $issues);
+        $this->assertCount(0, $issues->all());
+    }
+
+    public function testAppendCaptureUnusedIsFlagged(): void
+    {
+        $walker = new UnusedCaptureWalker();
+        $walker->reset();
+        $ast = $this->parse('{capture append="list"}item{/capture}');
+        $issues = new IssueCollector();
+        $this->walkTree($ast, $walker, $issues);
+        $walker->finalize($this->path, $issues);
+        $this->assertCount(1, $issues->all());
+        $this->assertSame('WARNING', $issues->all()[0]->severity);
+    }
+
+    public function testPositionalCaptureIsDetected(): void
+    {
+        // {capture 'name'} is shorthand for {capture name='name'}
+        $walker = new UnusedCaptureWalker();
+        $walker->reset();
+        $ast = $this->parse("{capture 'banner'}content{/capture}");
+        $issues = new IssueCollector();
+        $this->walkTree($ast, $walker, $issues);
+        $walker->finalize($this->path, $issues);
+        $this->assertCount(1, $issues->all());
+        $this->assertStringContainsString('banner', $issues->all()[0]->message);
+    }
+
+    public function testPositionalCaptureUsedIsNotFlagged(): void
+    {
+        $walker = new UnusedCaptureWalker();
+        $walker->reset();
+        $ast = $this->parse("{capture 'banner'}content{/capture}{\$smarty.capture.banner}");
+        $issues = new IssueCollector();
+        $this->walkTree($ast, $walker, $issues);
+        $walker->finalize($this->path, $issues);
+        $this->assertCount(0, $issues->all());
+    }
+
     // -------------------------------------------------------------------------
     // EmptyBlockWalker
     // -------------------------------------------------------------------------

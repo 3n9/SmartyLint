@@ -75,12 +75,17 @@ final class UnusedCaptureWalker implements NodeWalker
 
         foreach ($this->latestCapturesByKey as $key => $capture) {
             foreach ($this->variablePaths as $variable) {
-                if ($capture['type'] === 'named' && $variable === 'smarty.capture.' . $capture['name']) {
+                // named/append captures are read via {$smarty.capture.name}
+                if (
+                    in_array($capture['type'], ['named', 'append'], true)
+                    && $variable === 'smarty.capture.' . $capture['name']
+                ) {
                     $this->latestCapturesByKey[$key]['used'] = true;
                     break;
                 }
 
-                if (($capture['type'] === 'assign' || $capture['type'] === 'append') && explode('.', $variable)[0] === $capture['name']) {
+                // assign captures are read via {$varname} directly
+                if ($capture['type'] === 'assign' && explode('.', $variable)[0] === $capture['name']) {
                     $this->latestCapturesByKey[$key]['used'] = true;
                     break;
                 }
@@ -96,6 +101,17 @@ final class UnusedCaptureWalker implements NodeWalker
 
         foreach ($tag->arguments as $argument) {
             $argName = $argument->name !== null ? strtolower($argument->name) : null;
+
+            // Positional first argument is shorthand for name="..."
+            if ($argName === null) {
+                $literal = AstWalkerHelpers::stringLiteral($argument->value);
+                if ($literal !== null && $literal !== '') {
+                    $type = 'named';
+                    $name = $literal;
+                }
+                continue;
+            }
+
             if (!in_array($argName, ['name', 'assign', 'append'], true)) {
                 continue;
             }
