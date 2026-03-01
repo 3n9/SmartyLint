@@ -299,6 +299,27 @@ CLI flags take precedence over the config file.
 
 ## Rules
 
+| Rule | Key (for config) | On by default | Description |
+|------|-----------------|:-------------:|-------------|
+| `IncludeCycleDetector` | *(always on)* | ✅ always | Circular `{include}` / `{extends}` dependency chains |
+| `BlockStructureWalker` | `blockstructure` | ✅ | Structural errors in `{if}/{else}/{elseif}` blocks |
+| `DeprecatedTagWalker` | `deprecatedtag` | ✅ | Use of deprecated tags (`{php}`, `{insert}`) |
+| `RelativePathWalker` | `relativepath` | ✅ | Relative paths in `{include}` / `{extends}` |
+| `IncludeParameterWalker` | `includeparameter` | ✅ | Missing required `@param`-annotated parameters in `{include}` |
+| `UnusedCaptureWalker` | `unusedcapture` | ✅ | `{capture}` blocks whose variable is never read |
+| `EmptyBlockWalker` | `emptyblock` | ✅ | `{if}`, `{foreach}` etc. blocks with only whitespace content |
+| `DeepNestingWalker` | `deepnesting` | ✅ | Block nesting exceeding `maxNestingDepth` (default 5) |
+| `DuplicateBlockNameWalker` | `duplicateblockname` | ✅ | `{block}` names declared more than once in the same file |
+| `UnusedAssignWalker` | `unusedassign` | ✅ | `{assign}` variables never read in the same template |
+| `SuperglobalAccessWalker` | `superglobalaccess` | ✅ | Direct access to `$smarty.get.*`, `$smarty.post.*`, etc. |
+| `ComplexExpressionWalker` | `complexexpression` | ✅ | Modifier chains or boolean conditions exceeding configured limits |
+| `ModifierTypeMismatchWalker` | `modifiertypemismatch` | ✅ | Modifier used on an expression of an incompatible inferred type |
+| `UnescapedVariableWalker` | `unescapedvariable` | ⚙️ opt-in | Variables printed without an HTML-escaping modifier |
+
+Default-on rules can be disabled via `disabledRules` in `.smartylintrc.json` or `LintConfig`. Opt-in rules must be explicitly enabled via `--enable <key>` or `strictRules` in the config file.
+
+---
+
 ### IncludeCycleDetector
 
 Reports circular dependencies between templates via `{include}` or `{extends}` tags. Both direct self-inclusion and indirect cycles across any number of templates are detected.
