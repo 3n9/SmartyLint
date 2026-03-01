@@ -77,7 +77,7 @@ final class ComplexExpressionWalker implements NodeWalker
         if (!($expr instanceof BinaryExpressionNode) && !($expr instanceof UnaryExpressionNode)) {
             return;
         }
-        $count = $expr->countBinaryOperands();
+        $count = $this->countLogicalOperands($expr);
         if ($count > $this->maxConditionOperands) {
             $issues->add(
                 $path,
@@ -87,5 +87,25 @@ final class ComplexExpressionWalker implements NodeWalker
                 "Condition has {$count} operands, exceeding maximum of {$this->maxConditionOperands}; consider extracting into an {assign} or controller variable.",
             );
         }
+    }
+
+    /**
+     * Counts leaf operands in a boolean expression tree, recursing only through
+     * logical operators (&&, ||). Non-logical binary expressions (assignments,
+     * comparisons, string concatenation, arithmetic) are treated as single operands,
+     * preventing false positives from string interpolation and variable assignments.
+     */
+    private function countLogicalOperands(ExpressionNode $expr): int
+    {
+        // Unwrap grouping parentheses transparently.
+        if ($expr instanceof UnaryExpressionNode) {
+            return $this->countLogicalOperands($expr->expression);
+        }
+        // Only recurse through logical operators; everything else counts as one operand.
+        if ($expr instanceof BinaryExpressionNode && in_array($expr->operator, ['&&', '||'], true)) {
+            return $this->countLogicalOperands($expr->left)
+                 + $this->countLogicalOperands($expr->right);
+        }
+        return 1;
     }
 }

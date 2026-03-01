@@ -188,6 +188,32 @@ final class ComplexExpressionWalkerTest extends TestCase
         $this->assertCount(0, $result);
     }
 
+    public function testVariableAssignmentWithInterpolatedStringProducesNoIssue(): void
+    {
+        // {$var = "`$a`text`$b`"} — assignment with backtick interpolation must not be
+        // flagged as a complex condition even though the string contains multiple variables.
+        $walker = new ComplexExpressionWalker(3, 3);
+        $result = $this->issues('{$col = "`$a`<br />`$b`"}', $walker);
+        $this->assertCount(0, $result);
+    }
+
+    public function testStringInterpolationInIncludeArgumentProducesNoIssue(): void
+    {
+        // {include label="`$a`: text `$b`"} — a string argument with interpolated
+        // variables must not be counted as a multi-operand boolean condition.
+        $walker = new ComplexExpressionWalker(3, 3);
+        $result = $this->issues('{include file="x.tpl" label="`$lang.Interest`: See `$city` Rates"}', $walker);
+        $this->assertCount(0, $result);
+    }
+
+    public function testComparisonConditionInIfProducesNoIssue(): void
+    {
+        // {if ($var eq 1)} — simple comparison wrapped in parens: 1 logical operand.
+        $walker = new ComplexExpressionWalker(3, 3);
+        $result = $this->issues('{if ($var eq 1)}{/if}', $walker);
+        $this->assertCount(0, $result);
+    }
+
     // -------------------------------------------------------------------------
     // Rule disabled via disabledRules
     // -------------------------------------------------------------------------
