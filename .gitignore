@@ -5,4 +5,4 @@
 /.smartylint-cache.json
 tests/Fixtures/.smartylint-cache.json
 AGENTS.md
-AGENTS.md
+.DS_Store
