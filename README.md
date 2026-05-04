@@ -1,6 +1,6 @@
 # SmartyLint
 
-A CLI linter for [Smarty](https://www.smarty.net/) templates, powered by [SmartyAST](https://github.com/3n9/smarty-ast).
+A CLI linter for [Smarty](https://www.smarty.net/) templates, powered by [SmartyAST](https://github.com/3n9/SmartyAST).
 
 Parses each template into a typed AST and runs configurable walker-based rules. Supports project-wide analysis for unused code.
 
@@ -11,13 +11,13 @@ Parses each template into a typed AST and runs configurable walker-based rules. 
 ## Requirements
 
 - PHP 8.4+
-- Composer *(only required for source / Composer installs)*
+- Composer _(only required for source / Composer installs)_
 
 ---
 
 ## Installation
 
-### PHAR *(recommended)*
+### PHAR _(recommended)_
 
 Download the latest pre-built binary from [GitHub Releases](https://github.com/3n9/SmartyLint/releases/latest):
 
@@ -60,69 +60,78 @@ php bin/smarty-lint [options] <file|dir> [...]
 
 ### Options
 
-| Flag | Description |
-|------|-------------|
-| `--recursive`, `-r` | Recursively scan directory for `.tpl` files (unreadable subdirectories are skipped) |
-| `--format <fmt>` | Output format: `text` (default), `json`, `sarif`, `checkstyle` |
-| `--json` | Alias for `--format json` |
-| `--find-unused` | Run project-wide unused-code analysis after per-file linting |
-| `--errors-only` | Suppress warnings; only report `ERROR` severity issues |
-| `--exclude <pattern>` | Exclude files matching a glob pattern (repeatable) |
-| `--template-root <path>` | Base directory for resolving `{include}` / `{extends}` paths |
-| `--max-depth <n>` | Maximum recursion depth for `--recursive` directory scans (`0` = root directory only) |
-| `--enable <rule>` | Enable an opt-in rule (repeatable), e.g. `--enable UnescapedVariable` |
-| `--version`, `-V` | Print version and exit |
+| Flag                     | Description                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| `--recursive`, `-r`      | Recursively scan directory for `.tpl` files (unreadable subdirectories are skipped)   |
+| `--format <fmt>`         | Output format: `text` (default), `json`, `sarif`, `checkstyle`                        |
+| `--json`                 | Alias for `--format json`                                                             |
+| `--find-unused`          | Run project-wide unused-code analysis after per-file linting                          |
+| `--errors-only`          | Suppress warnings; only report `ERROR` severity issues                                |
+| `--exclude <pattern>`    | Exclude files matching a glob pattern (repeatable)                                    |
+| `--template-root <path>` | Base directory for resolving `{include}` / `{extends}` paths                          |
+| `--max-depth <n>`        | Maximum recursion depth for `--recursive` directory scans (`0` = root directory only) |
+| `--enable <rule>`        | Enable an opt-in rule (repeatable), e.g. `--enable UnescapedVariable`                 |
+| `--version`, `-V`        | Print version and exit                                                                |
 
 ### Exit codes
 
-| Code | Meaning |
-|------|---------|
-| `0` | No issues found (or all suppressed by `--errors-only`) |
-| `1` | Issues found, or a fatal error occurred |
+| Code | Meaning                                                |
+| ---- | ------------------------------------------------------ |
+| `0`  | No issues found (or all suppressed by `--errors-only`) |
+| `1`  | Issues found, or a fatal error occurred                |
 
 ### Examples
 
 Lint a single file:
+
 ```bash
 php bin/smarty-lint templates/page.tpl
 ```
 
 Lint an entire directory:
+
 ```bash
 php bin/smarty-lint --recursive templates/
 ```
 
 JSON output (for CI/editor integration):
+
 ```bash
 php bin/smarty-lint --json --recursive templates/
 ```
 
 SARIF output (GitHub Actions / VS Code):
+
 ```bash
 php bin/smarty-lint --format sarif --recursive templates/ > results.sarif
 ```
 
 Checkstyle XML output (Jenkins / PHPStorm):
+
 ```bash
 php bin/smarty-lint --format checkstyle --recursive templates/
 ```
 
 Errors only (fail fast, no warnings):
+
 ```bash
 php bin/smarty-lint --errors-only --recursive templates/
 ```
 
 Exclude generated or vendor templates:
+
 ```bash
 php bin/smarty-lint --recursive --exclude '*/vendor/*' --exclude '*/generated/*' templates/
 ```
 
 Resolve includes relative to a shared template root:
+
 ```bash
 php bin/smarty-lint --template-root /var/www/app/templates --recursive templates/
 ```
 
 Project-wide unused code analysis:
+
 ```bash
 php bin/smarty-lint --find-unused --recursive templates/
 ```
@@ -192,27 +201,27 @@ Install the [diagnostic-languageserver](https://marketplace.visualstudio.com/ite
 
 ```json
 {
-    "diagnostic-languageserver.linters": {
-        "smartylint": {
-            "command": "smartylint",
-            "args": ["--json", "%filepath"],
-            "sourceName": "SmartyLint",
-            "parseJson": {
-                "errorsRoot": "",
-                "line": "line",
-                "column": "col",
-                "message": "${message}",
-                "security": "severity"
-            },
-            "securities": {
-                "ERROR": "error",
-                "WARNING": "warning"
-            }
-        }
-    },
-    "diagnostic-languageserver.filetypes": {
-        "smarty": "smartylint"
+  "diagnostic-languageserver.linters": {
+    "smartylint": {
+      "command": "smartylint",
+      "args": ["--json", "%filepath"],
+      "sourceName": "SmartyLint",
+      "parseJson": {
+        "errorsRoot": "",
+        "line": "line",
+        "column": "col",
+        "message": "${message}",
+        "security": "severity"
+      },
+      "securities": {
+        "ERROR": "error",
+        "WARNING": "warning"
+      }
     }
+  },
+  "diagnostic-languageserver.filetypes": {
+    "smarty": "smartylint"
+  }
 }
 ```
 
@@ -220,9 +229,9 @@ VS Code doesn't recognise `.tpl` as Smarty by default. Install the [Smarty Templ
 
 ```json
 {
-    "files.associations": {
-        "*.tpl": "smarty"
-    }
+  "files.associations": {
+    "*.tpl": "smarty"
+  }
 }
 ```
 
@@ -231,25 +240,28 @@ VS Code doesn't recognise `.tpl` as Smarty by default. Install the [Smarty Templ
 ## Output Formats
 
 **Text (default):**
+
 ```
 templates/page.tpl:12:5: [ERROR] {php} tag is deprecated
 templates/partials/item.tpl:3:1: [WARNING] Missing required parameter 'title' when including 'partials/card.tpl'
 ```
 
 **JSON (`--json` or `--format json`):**
+
 ```json
 [
-    {
-        "path": "templates/page.tpl",
-        "line": 12,
-        "col": 5,
-        "severity": "ERROR",
-        "message": "{php} tag is deprecated"
-    }
+  {
+    "path": "templates/page.tpl",
+    "line": 12,
+    "col": 5,
+    "severity": "ERROR",
+    "message": "{php} tag is deprecated"
+  }
 ]
 ```
 
 **SARIF 2.1.0 (`--format sarif`)** — for GitHub Actions, VS Code SARIF Viewer:
+
 ```json
 {
     "$schema": "https://raw.githubusercontent.com/.../sarif-schema-2.1.0.json",
@@ -259,6 +271,7 @@ templates/partials/item.tpl:3:1: [WARNING] Missing required parameter 'title' wh
 ```
 
 **Checkstyle XML (`--format checkstyle`)** — for Jenkins, PHPStorm:
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <checkstyle version="8.0">
@@ -276,22 +289,22 @@ Create `.smartylintrc.json` in the directory where you run `smarty-lint` (usuall
 
 ```json
 {
-    "templateRoot": "templates",
-    "maxNestingDepth": 4,
-    "maxScanDepth": 3,
-    "disabledRules": ["DeprecatedTag"],
-    "excludePatterns": ["*/vendor/*", "*/generated/*"]
+  "templateRoot": "templates",
+  "maxNestingDepth": 4,
+  "maxScanDepth": 3,
+  "disabledRules": ["DeprecatedTag"],
+  "excludePatterns": ["*/vendor/*", "*/generated/*"]
 }
 ```
 
-| Key | Type | Description |
-|-----|------|-------------|
-| `templateRoot` | string | Base directory for resolving `{include}` / `{extends}` paths |
-| `maxNestingDepth` | int | Maximum block nesting depth before `DeepNestingWalker` warns (default `5`) |
-| `maxScanDepth` | int | Maximum depth for recursive directory scans (`0` = root directory only, omitted = unlimited) |
-| `disabledRules` | string[] | Walker names to disable (case-insensitive): `DeprecatedTag`, `RelativePath`, `BlockStructure`, `IncludeParameter`, `UnusedCapture`, `EmptyBlock`, `DeepNesting`, `DuplicateBlockName`, `UnusedAssign` |
-| `strictRules` | string[] | Opt-in rules to enable (off by default): `UnescapedVariable` |
-| `excludePatterns` | string[] | Glob patterns for files to skip |
+| Key               | Type     | Description                                                                                                                                                                                           |
+| ----------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `templateRoot`    | string   | Base directory for resolving `{include}` / `{extends}` paths                                                                                                                                          |
+| `maxNestingDepth` | int      | Maximum block nesting depth before `DeepNestingWalker` warns (default `5`)                                                                                                                            |
+| `maxScanDepth`    | int      | Maximum depth for recursive directory scans (`0` = root directory only, omitted = unlimited)                                                                                                          |
+| `disabledRules`   | string[] | Walker names to disable (case-insensitive): `DeprecatedTag`, `RelativePath`, `BlockStructure`, `IncludeParameter`, `UnusedCapture`, `EmptyBlock`, `DeepNesting`, `DuplicateBlockName`, `UnusedAssign` |
+| `strictRules`     | string[] | Opt-in rules to enable (off by default): `UnescapedVariable`                                                                                                                                          |
+| `excludePatterns` | string[] | Glob patterns for files to skip                                                                                                                                                                       |
 
 CLI flags take precedence over the config file.
 
@@ -299,22 +312,22 @@ CLI flags take precedence over the config file.
 
 ## Rules
 
-| Rule | Key (for config) | On by default | Needs `--template-root` | Description |
-|------|-----------------|:-------------:|:-----------------------:|-------------|
-| `IncludeCycleDetector` | *(always on)* | ✅ always | ✅ required | Circular `{include}` / `{extends}` dependency chains |
-| `BlockStructureWalker` | `blockstructure` | ✅ | — | Structural errors in `{if}/{else}/{elseif}` blocks |
-| `DeprecatedTagWalker` | `deprecatedtag` | ✅ | — | Use of deprecated tags (`{php}`, `{insert}`) |
-| `RelativePathWalker` | `relativepath` | ✅ | — | Relative paths in `{include}` / `{extends}` |
-| `IncludeParameterWalker` | `includeparameter` | ✅ | ✅ required | Missing required `@param`-annotated parameters in `{include}` |
-| `UnusedCaptureWalker` | `unusedcapture` | ✅ | — | `{capture}` blocks whose variable is never read |
-| `EmptyBlockWalker` | `emptyblock` | ✅ | — | `{if}`, `{foreach}` etc. blocks with only whitespace content |
-| `DeepNestingWalker` | `deepnesting` | ✅ | — | Block nesting exceeding `maxNestingDepth` (default 5) |
-| `DuplicateBlockNameWalker` | `duplicateblockname` | ✅ | — | `{block}` names declared more than once in the same file |
-| `UnusedAssignWalker` | `unusedassign` | ✅ | — | `{assign}` variables never read in the same template |
-| `SuperglobalAccessWalker` | `superglobalaccess` | ✅ | — | Direct access to `$smarty.get.*`, `$smarty.post.*`, etc. |
-| `ComplexExpressionWalker` | `complexexpression` | ✅ | — | Modifier chains or boolean conditions exceeding configured limits |
-| `ModifierTypeMismatchWalker` | `modifiertypemismatch` | ✅ | — | Modifier used on an expression of an incompatible inferred type |
-| `UnescapedVariableWalker` | `unescapedvariable` | ⚙️ opt-in | — | Variables printed without an HTML-escaping modifier |
+| Rule                         | Key (for config)       | On by default | Needs `--template-root` | Description                                                       |
+| ---------------------------- | ---------------------- | :-----------: | :---------------------: | ----------------------------------------------------------------- |
+| `IncludeCycleDetector`       | _(always on)_          |   ✅ always   |       ✅ required       | Circular `{include}` / `{extends}` dependency chains              |
+| `BlockStructureWalker`       | `blockstructure`       |      ✅       |            —            | Structural errors in `{if}/{else}/{elseif}` blocks                |
+| `DeprecatedTagWalker`        | `deprecatedtag`        |      ✅       |            —            | Use of deprecated tags (`{php}`, `{insert}`)                      |
+| `RelativePathWalker`         | `relativepath`         |      ✅       |            —            | Relative paths in `{include}` / `{extends}`                       |
+| `IncludeParameterWalker`     | `includeparameter`     |      ✅       |       ✅ required       | Missing required `@param`-annotated parameters in `{include}`     |
+| `UnusedCaptureWalker`        | `unusedcapture`        |      ✅       |            —            | `{capture}` blocks whose variable is never read                   |
+| `EmptyBlockWalker`           | `emptyblock`           |      ✅       |            —            | `{if}`, `{foreach}` etc. blocks with only whitespace content      |
+| `DeepNestingWalker`          | `deepnesting`          |      ✅       |            —            | Block nesting exceeding `maxNestingDepth` (default 5)             |
+| `DuplicateBlockNameWalker`   | `duplicateblockname`   |      ✅       |            —            | `{block}` names declared more than once in the same file          |
+| `UnusedAssignWalker`         | `unusedassign`         |      ✅       |            —            | `{assign}` variables never read in the same template              |
+| `SuperglobalAccessWalker`    | `superglobalaccess`    |      ✅       |            —            | Direct access to `$smarty.get.*`, `$smarty.post.*`, etc.          |
+| `ComplexExpressionWalker`    | `complexexpression`    |      ✅       |            —            | Modifier chains or boolean conditions exceeding configured limits |
+| `ModifierTypeMismatchWalker` | `modifiertypemismatch` |      ✅       |            —            | Modifier used on an expression of an incompatible inferred type   |
+| `UnescapedVariableWalker`    | `unescapedvariable`    |   ⚙️ opt-in   |            —            | Variables printed without an HTML-escaping modifier               |
 
 Default-on rules can be disabled via `disabledRules` in `.smartylintrc.json` or `LintConfig`. Opt-in rules must be explicitly enabled via `--enable <key>` or `strictRules` in the config file. Rules marked **Needs `--template-root`** resolve included files from disk; without a template root they silently skip cross-file checks.
 
@@ -342,9 +355,9 @@ This check is always active and cannot be disabled via `disabledRules`.
 
 Reports use of deprecated Smarty tags.
 
-| Tag | Message |
-|-----|---------|
-| `{php}` | `{php} tag is deprecated` |
+| Tag        | Message                      |
+| ---------- | ---------------------------- |
+| `{php}`    | `{php} tag is deprecated`    |
 | `{insert}` | `{insert} tag is deprecated` |
 
 ---
@@ -384,6 +397,7 @@ Supports both `assign=` and `name=` attribute forms. Detects usage of `$sidebar`
 Reports missing required parameters when calling `{include}`. Required parameters are declared in the included template using `@param` annotations in a comment block.
 
 **Declaring required parameters in a template:**
+
 ```smarty
 {* @param string $title  Card title (required)
    @param string $body   Card body text (required) *}
@@ -394,12 +408,14 @@ Reports missing required parameters when calling `{include}`. Required parameter
 ```
 
 **Calling with a missing parameter:**
+
 ```smarty
 {* WARNING: Missing required parameter 'body' *}
 {include file="partials/card.tpl" title="Hello"}
 ```
 
 **Notes:**
+
 - All `@param` annotations must be in a **single comment block** at the top of the template.
 - Only the first comment node in the template is scanned.
 - Parameters with defaults or optional ones should not use `@param` (or be excluded from the comment).
@@ -410,12 +426,12 @@ Reports missing required parameters when calling `{include}`. Required parameter
 
 Reports structural issues in `{if}/{else}/{elseif}` blocks.
 
-| Issue | Severity |
-|-------|----------|
-| `{else}` or `{/if}` misaligned with opening `{if}` | WARNING |
-| `{elseif}` or `{else}` after a previous `{else}` | ERROR |
-| `{else}` tag used with a condition (should be `{elseif}`) | ERROR |
-| Multiple `{else}` blocks in the same `{if}` | ERROR |
+| Issue                                                     | Severity |
+| --------------------------------------------------------- | -------- |
+| `{else}` or `{/if}` misaligned with opening `{if}`        | WARNING  |
+| `{elseif}` or `{else}` after a previous `{else}`          | ERROR    |
+| `{else}` tag used with a condition (should be `{elseif}`) | ERROR    |
+| Multiple `{else}` blocks in the same `{if}`               | ERROR    |
 
 ---
 
@@ -472,19 +488,21 @@ Covers both the named (`var=`) and shorthand forms, as well as `{append}`.
 
 ---
 
-### UnescapedVariableWalker *(opt-in)*
+### UnescapedVariableWalker _(opt-in)_
 
 Warns when a variable is printed without an HTML-escaping modifier. Because Smarty does not auto-escape output, `{$var}` renders the raw value and is a potential XSS vector.
 
 **Enable via CLI:**
+
 ```bash
 php bin/smarty-lint --enable UnescapedVariable --recursive templates/
 ```
 
 **Enable via config file:**
+
 ```json
 {
-    "strictRules": ["UnescapedVariable"]
+  "strictRules": ["UnescapedVariable"]
 }
 ```
 
@@ -503,16 +521,17 @@ The recognised escape modifier is `escape` (all `escape:*` type variants are cov
 
 ---
 
-### SuperglobalAccessWalker *(default on)*
+### SuperglobalAccessWalker _(default on)_
 
 Warns when a template reads HTTP input or server environment data directly via `$smarty.get.*`, `$smarty.post.*`, `$smarty.request.*`, `$smarty.cookies.*`, `$smarty.server.*`, `$smarty.env.*`, or `$smarty.session.*`.
 
 Templates should receive pre-processed, validated data from the controller. Direct superglobal access makes templates hard to test and bypasses input validation, which can introduce XSS or injection vulnerabilities.
 
 **Disable via config file** (if your codebase intentionally uses superglobals in templates):
+
 ```json
 {
-    "disabledRules": ["SuperglobalAccess"]
+  "disabledRules": ["SuperglobalAccess"]
 }
 ```
 
@@ -657,7 +676,7 @@ final class NoHardcodedUrlWalker implements NodeWalker
 }
 ```
 
-Inject the walker by constructing a custom `Linter` instance with it added to the walker list alongside the built-in walkers. For walkers that need to react *after* all children are visited (e.g., depth tracking), implement `ExitAwareNodeWalker` which adds an `onExit()` callback.
+Inject the walker by constructing a custom `Linter` instance with it added to the walker list alongside the built-in walkers. For walkers that need to react _after_ all children are visited (e.g., depth tracking), implement `ExitAwareNodeWalker` which adds an `onExit()` callback.
 
 ---
 
@@ -683,15 +702,15 @@ php dist/smartylint.phar --help
 
 301 tests across seven test classes:
 
-| File | Tests |
-|------|-------|
-| `tests/BinTest.php` | 49 |
-| `tests/BinExtendedTest.php` | 75 |
-| `tests/BinWalkerTest.php` | 43 |
-| `tests/LinterTest.php` | 20 |
-| `tests/FindUnusedAnalysisTest.php` | 34 |
-| `tests/WalkerUnitTest.php` | 77 |
-| `tests/LintEngineTest.php` | 3 |
+| File                               | Tests |
+| ---------------------------------- | ----- |
+| `tests/BinTest.php`                | 49    |
+| `tests/BinExtendedTest.php`        | 75    |
+| `tests/BinWalkerTest.php`          | 43    |
+| `tests/LinterTest.php`             | 20    |
+| `tests/FindUnusedAnalysisTest.php` | 34    |
+| `tests/WalkerUnitTest.php`         | 77    |
+| `tests/LintEngineTest.php`         | 3     |
 
 ---
 
