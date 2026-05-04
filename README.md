@@ -8,6 +8,49 @@ Parses each template into a typed AST and runs configurable walker-based rules. 
 
 ---
 
+## Table of Contents
+
+- [Requirements](#requirements)
+- [Installation](#installation)
+  - [PHAR _(recommended)_](#phar-recommended)
+  - [Via Composer](#via-composer)
+  - [From source](#from-source)
+- [Usage](#usage)
+  - [Options](#options)
+  - [Exit codes](#exit-codes)
+  - [Examples](#examples)
+- [Editor Integration](#editor-integration)
+  - [Neovim — nvim-lint (LazyVim)](#neovim--nvim-lint-lazyvim)
+  - [Neovim — none-ls (LazyVim)](#neovim--none-ls-lazyvim)
+  - [Visual Studio Code — diagnostic-languageserver](#visual-studio-code--diagnostic-languageserver)
+- [Output Formats](#output-formats)
+- [Configuration File](#configuration-file)
+- [Rules](#rules)
+  - [IncludeCycleDetector](#includecycledetector)
+  - [DeprecatedTagWalker](#deprecatedtagwalker)
+  - [RelativePathWalker](#relativepathwalker)
+  - [UnusedCaptureWalker](#unusedcapturewalker)
+  - [IncludeParameterWalker](#includeparameterwalker)
+  - [BlockStructureWalker](#blockstructurewalker)
+  - [EmptyBlockWalker](#emptyblockwalker)
+  - [DeepNestingWalker](#deepnestingwalker)
+  - [DuplicateBlockNameWalker](#duplicateblocknamewalker)
+  - [UnusedAssignWalker](#unusedassignwalker)
+  - [UnescapedVariableWalker](#unescapedvariablewalker-opt-in)
+  - [SuperglobalAccessWalker](#superglobalaccesswalker-default-on)
+- [`--find-unused` Analysis](#--find-unused-analysis)
+  - [DeadParameterAnalyzer](#deadparameteranalyzer)
+  - [UnusedBlockAnalyzer](#unusedblockanalyzer)
+  - [UnusedFunctionAnalyzer](#unusedfunctionanalyzer)
+- [Caching](#caching)
+- [Programmatic API (`LintEngine`)](#programmatic-api-lintengine)
+- [Adding Custom Walkers](#adding-custom-walkers)
+- [Running Tests](#running-tests)
+- [Build PHAR](#build-phar)
+- [Known Parser Limitations](#known-parser-limitations)
+
+---
+
 ## Requirements
 
 - PHP 8.4+
@@ -82,55 +125,63 @@ php bin/smarty-lint [options] <file|dir> [...]
 
 ### Examples
 
+#### Basic usage
+
 Lint a single file:
 
 ```bash
 php bin/smarty-lint templates/page.tpl
 ```
 
-Lint an entire directory:
+Lint a directory recursively:
 
 ```bash
 php bin/smarty-lint --recursive templates/
 ```
 
-JSON output (for CI/editor integration):
+#### Output formats
+
+JSON output (for CI and editor integration):
 
 ```bash
 php bin/smarty-lint --json --recursive templates/
 ```
 
-SARIF output (GitHub Actions / VS Code):
+SARIF output (for GitHub Actions and VS Code SARIF Viewer):
 
 ```bash
 php bin/smarty-lint --format sarif --recursive templates/ > results.sarif
 ```
 
-Checkstyle XML output (Jenkins / PHPStorm):
+Checkstyle XML output (for Jenkins and PHPStorm):
 
 ```bash
 php bin/smarty-lint --format checkstyle --recursive templates/
 ```
 
-Errors only (fail fast, no warnings):
+#### Filtering and control
+
+Suppress warnings; report errors only:
 
 ```bash
 php bin/smarty-lint --errors-only --recursive templates/
 ```
 
-Exclude generated or vendor templates:
+Exclude paths matching a glob pattern:
 
 ```bash
 php bin/smarty-lint --recursive --exclude '*/vendor/*' --exclude '*/generated/*' templates/
 ```
 
-Resolve includes relative to a shared template root:
+#### Project-wide analysis
+
+Resolve `{include}` paths from a template root:
 
 ```bash
 php bin/smarty-lint --template-root /var/www/app/templates --recursive templates/
 ```
 
-Project-wide unused code analysis:
+Detect unused code across the project:
 
 ```bash
 php bin/smarty-lint --find-unused --recursive templates/
@@ -144,7 +195,7 @@ php bin/smarty-lint --find-unused --recursive templates/
 
 ![Neovim with SmartyLint diagnostics](.github/screenshots/editor-neovim.png)
 
-Create `lua/plugins/lint.lua` in your Neovim config:
+Create `lua/plugins/nvim-lint.lua` in your Neovim config:
 
 ```lua
 return {
@@ -184,6 +235,80 @@ return {
       opts.linters_by_ft.smarty = { "smartylint" }
     end,
   },
+}
+```
+
+Neovim doesn't have a built-in `smarty` filetype. Add this to detect `.tpl` files:
+
+```lua
+vim.filetype.add({ extension = { tpl = "smarty" } })
+```
+
+### Neovim — none-ls (LazyVim)
+
+Create `lua/plugins/none-ls.lua` in your Neovim config:
+
+```lua
+return {
+    "nvimtools/none-ls.nvim",
+    optional = true,
+    opts = function(_, opts)
+      local null_ls = require("null-ls")
+      local helpers = require("null-ls.helpers")
+      local methods = require("null-ls.methods")
+      local smarty_lint_bin = vim.env.SMARTY_LINT_BIN
+
+      if not smarty_lint_bin or smarty_lint_bin == "" then
+        smarty_lint_bin = vim.fn.exepath("smarty-lint")
+      end
+
+      if smarty_lint_bin ~= "" then
+        local smarty_lint = helpers.make_builtin({
+          name = "smarty-lint",
+          meta = {
+            url = "https://github.com/3n9/SmartyLint",
+            description = "Lint Smarty templates and report diagnostics",
+          },
+          method = {
+            methods.internal.DIAGNOSTICS_ON_OPEN,
+            methods.internal.DIAGNOSTICS_ON_SAVE,
+          },
+          filetypes = { "smarty" },
+          generator_opts = {
+            command = smarty_lint_bin,
+            args = { "--json", "$FILENAME" },
+            to_stdin = false,
+            format = "json",
+            check_exit_code = function()
+              return true
+            end,
+            on_output = function(params)
+              if type(params.output) ~= "table" then
+                return {}
+              end
+
+              local diagnostics = {}
+              for _, item in ipairs(params.output) do
+                diagnostics[#diagnostics + 1] = {
+                  row = item.line or 1,
+                  col = item.col or 1,
+                  message = item.message or "",
+                  source = "smarty-lint",
+                  severity = item.severity == "ERROR" and vim.diagnostic.severity.ERROR or vim.diagnostic.severity.WARN,
+                }
+              end
+
+              return diagnostics
+            end,
+          },
+          factory = helpers.generator_factory,
+        })
+
+        table.insert(opts.sources, smarty_lint)
+      end
+
+      return opts
+    end,
 }
 ```
 
