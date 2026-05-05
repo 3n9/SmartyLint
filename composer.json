@@ -2,9 +2,10 @@
     "name": "3n9/smarty-lint",
     "description": "Smarty AST-based linter CLI",
     "type": "project",
+    "license": "MIT",
     "require": {
         "php": "^8.4",
-        "3n9/smarty-ast": "^1.0"
+        "3n9/smarty-ast": "^1.2"
     },
     "autoload": {
         "psr-4": {

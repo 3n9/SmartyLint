@@ -843,7 +843,5 @@ php dist/smartylint.phar --help
 
 The following Smarty constructs are not yet supported by the underlying SmartyAST parser and will produce diagnostics:
 
-- `{foreach $arr as $k => $v}` — key-value foreach syntax
-- `$item@first`, `$item@last`, `$item@index` — foreach iteration variables
 - `$sections.0.title` — numeric segment in a property path
 - `$smarty.get.*`, `$smarty.session.*` — only `$smarty.now` and `$smarty.capture.*` are fully supported

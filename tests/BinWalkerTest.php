@@ -645,13 +645,48 @@ final class BinWalkerTest extends LintTestCase
 
     public function testForeachWithIterationCounterIsClean(): void
     {
-        // $item@first/$item@last/@index are not supported by SmartyAst parser;
-        // use a manual counter approach that IS supported
         $path = $this->writeTmp(implode("\n", [
             '{assign var="idx" value=0}',
             '{foreach $items as $item}',
             '  {assign var="idx" value=$idx+1}',
             '  <li class="{if $idx eq 1}first{/if}">{$item.name|escape}</li>',
+            '{/foreach}',
+        ]));
+
+        [$exit, , $stderr] = $this->runBin([$path]);
+        $this->assertStringNotContainsString('Fatal error', $stderr);
+        $issues = $this->runBinJson([$path]);
+        $errors = array_filter($issues, static fn ($i) => $i['severity'] === 'ERROR');
+        $this->assertCount(0, $errors);
+    }
+
+    public function testForeachIterationPropertiesAreClean(): void
+    {
+        // $item@first, $item@last, $item@index are now supported by SmartyAST v1.2+.
+        $path = $this->writeTmp(implode("\n", [
+            '{foreach $items as $item}',
+            '  {if $item@first}<ul>{/if}',
+            '  <li>{$item.name|escape}{if !$item@last},{/if}</li>',
+            '  {if $item@last}</ul>{/if}',
+            '{/foreach}',
+        ]));
+
+        [$exit, , $stderr] = $this->runBin([$path]);
+        $this->assertStringNotContainsString('Fatal error', $stderr);
+        $issues = $this->runBinJson([$path]);
+        $errors = array_filter($issues, static fn ($i) => $i['severity'] === 'ERROR');
+        $this->assertCount(0, $errors);
+    }
+
+    public function testForeachShorthandSyntaxIsClean(): void
+    {
+        // {foreach $arr as $v} and {foreach $arr as $k => $v} are now supported.
+        $path = $this->writeTmp(implode("\n", [
+            '{foreach $items as $item}',
+            '  <li>{$item|escape}</li>',
+            '{/foreach}',
+            '{foreach $map as $key => $value}',
+            '  <dt>{$key|escape}</dt><dd>{$value|escape}</dd>',
             '{/foreach}',
         ]));
 

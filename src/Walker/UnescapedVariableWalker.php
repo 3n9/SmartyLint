@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SmartyLint\Walker;
 
+use SmartyAst\Ast\ForeachIterationPropertyNode;
 use SmartyAst\Ast\ModifierChainExpressionNode;
 use SmartyAst\Ast\Node;
 use SmartyAst\Ast\PrintNode;
@@ -35,6 +36,12 @@ final class UnescapedVariableWalker implements NodeWalker
         }
 
         $expr = $node->expression;
+
+        // Foreach iteration properties ($item@first, $item@last, etc.) are booleans
+        // or integers — they never need HTML-escaping.
+        if ($expr instanceof ForeachIterationPropertyNode) {
+            return;
+        }
 
         if ($expr instanceof ModifierChainExpressionNode) {
             foreach ($expr->modifiers as $modifier) {

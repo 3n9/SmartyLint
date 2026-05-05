@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "469d8b0537b7e80eb4a0ba5d8dfc78ee",
+    "content-hash": "005ab96b0c2f70cacca942f4513c25e9",
     "packages": [
         {
             "name": "3n9/smarty-ast",
-            "version": "v1.1.1",
+            "version": "v1.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/3n9/SmartyAST.git",
-                "reference": "db51fafa0c1fe10ffbde4f848a0a3054a905b15a"
+                "reference": "db01f4b97016d47c6f426c9da9373bee77930dfb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/3n9/SmartyAST/zipball/db51fafa0c1fe10ffbde4f848a0a3054a905b15a",
-                "reference": "db51fafa0c1fe10ffbde4f848a0a3054a905b15a",
+                "url": "https://api.github.com/repos/3n9/SmartyAST/zipball/db01f4b97016d47c6f426c9da9373bee77930dfb",
+                "reference": "db01f4b97016d47c6f426c9da9373bee77930dfb",
                 "shasum": ""
             },
             "require": {
@@ -43,14 +43,14 @@
                 ]
             },
             "license": [
-                "proprietary"
+                "MIT"
             ],
             "description": "Smarty template AST parser with diagnostics and position tracking",
             "support": {
-                "source": "https://github.com/3n9/SmartyAST/tree/v1.1.1",
+                "source": "https://github.com/3n9/SmartyAST/tree/v1.2.0",
                 "issues": "https://github.com/3n9/SmartyAST/issues"
             },
-            "time": "2026-02-28T15:48:41+00:00"
+            "time": "2026-05-05T07:06:27+00:00"
         }
     ],
     "packages-dev": [
